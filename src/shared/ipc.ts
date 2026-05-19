@@ -50,6 +50,7 @@ export interface ClockifyDesktopApi {
   exportDetailedReport(request: ExportRequest): Promise<ExportResult | null>;
   openFile(path: string): Promise<void>;
   openFolder(path: string): Promise<void>;
+  openExternalUrl(url: string): Promise<void>;
   copyText(text: string): Promise<void>;
   fitWindowToContent(): Promise<void>;
 }
@@ -62,6 +63,7 @@ export const IPC_CHANNELS = {
   clockifyExportDetailedReport: 'clockify:export-detailed-report',
   desktopOpenFile: 'desktop:open-file',
   desktopOpenFolder: 'desktop:open-folder',
+  desktopOpenExternalUrl: 'desktop:open-external-url',
   desktopCopyText: 'desktop:copy-text',
   windowFitContent: 'window:fit-content'
 } as const;

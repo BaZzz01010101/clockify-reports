@@ -41,6 +41,7 @@ describe('preload bridge', () => {
     });
     await api.openFile('D:/Exports/report.csv');
     await api.openFolder('D:/Exports/report.csv');
+    await api.openExternalUrl('https://app.clockify.me/calendar');
     await api.copyText('D:/Exports/report.csv');
     await api.fitWindowToContent();
 
@@ -58,7 +59,8 @@ describe('preload bridge', () => {
     );
     expect(invoke).toHaveBeenNthCalledWith(6, IPC_CHANNELS.desktopOpenFile, 'D:/Exports/report.csv');
     expect(invoke).toHaveBeenNthCalledWith(7, IPC_CHANNELS.desktopOpenFolder, 'D:/Exports/report.csv');
-    expect(invoke).toHaveBeenNthCalledWith(8, IPC_CHANNELS.desktopCopyText, 'D:/Exports/report.csv');
-    expect(invoke).toHaveBeenNthCalledWith(9, IPC_CHANNELS.windowFitContent);
+    expect(invoke).toHaveBeenNthCalledWith(8, IPC_CHANNELS.desktopOpenExternalUrl, 'https://app.clockify.me/calendar');
+    expect(invoke).toHaveBeenNthCalledWith(9, IPC_CHANNELS.desktopCopyText, 'D:/Exports/report.csv');
+    expect(invoke).toHaveBeenNthCalledWith(10, IPC_CHANNELS.windowFitContent);
   });
 });

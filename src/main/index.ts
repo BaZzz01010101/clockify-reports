@@ -96,6 +96,7 @@ app.whenReady().then(async () => {
     desktop: {
       openPath: (targetPath) => shell.openPath(targetPath),
       showItemInFolder: (targetPath) => shell.showItemInFolder(targetPath),
+      openExternal: (url) => shell.openExternal(url),
       writeText: (text) => clipboard.writeText(text)
     },
     window: {

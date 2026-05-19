@@ -24,6 +24,7 @@ describe('App', () => {
     exportDetailedReport: vi.fn(),
     openFile: vi.fn(),
     openFolder: vi.fn(),
+    openExternalUrl: vi.fn(),
     copyText: vi.fn(),
     fitWindowToContent: vi.fn()
   };
@@ -39,6 +40,7 @@ describe('App', () => {
     vi.mocked(api.exportDetailedReport).mockReset();
     vi.mocked(api.openFile).mockReset();
     vi.mocked(api.openFolder).mockReset();
+    vi.mocked(api.openExternalUrl).mockReset();
     vi.mocked(api.copyText).mockReset();
     vi.mocked(api.fitWindowToContent).mockReset();
   });
@@ -159,14 +161,14 @@ describe('App', () => {
           userName: 'Ada Lovelace',
           overlapSeconds: 1800,
           first: {
-            id: 'entry-1',
+            id: undefined as unknown as string,
             projectName: 'Clockify',
             description: 'Morning analysis',
             start: '2026-05-04T08:00:00.000Z',
             end: '2026-05-04T10:00:00.000Z'
           },
           second: {
-            id: 'entry-2',
+            id: undefined as unknown as string,
             projectName: 'Clockify',
             description: 'Overlapping review',
             start: '2026-05-04T09:30:00.000Z',
@@ -187,10 +189,17 @@ describe('App', () => {
 
     expect(await screen.findByText(/overlapping time entries were found/i)).toBeInTheDocument();
     expect(screen.getByText(/04 May 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/08:00-10:00/)).toBeInTheDocument();
+    expect(screen.getByText(/09:30-10:30/)).toBeInTheDocument();
+    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open clockify calendar/i })).toHaveAttribute(
       'href',
       'https://app.clockify.me/calendar'
     );
+    fireEvent.click(screen.getByRole('link', { name: /open clockify calendar/i }));
+    await waitFor(() => {
+      expect(api.openExternalUrl).toHaveBeenCalledWith('https://app.clockify.me/calendar');
+    });
     expect(screen.getByRole('button', { name: /^ok$/i })).toBeInTheDocument();
   });
 });

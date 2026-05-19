@@ -18,6 +18,7 @@ export const registerIpcHandlers = ({
   desktop: {
     openPath(path: string): Promise<string>;
     showItemInFolder(path: string): void;
+    openExternal(url: string): Promise<void>;
     writeText(text: string): void;
   };
   window: {
@@ -43,6 +44,16 @@ export const registerIpcHandlers = ({
   ipcMain.handle(IPC_CHANNELS.desktopOpenFolder, (_, targetPath: string) =>
     desktop.showItemInFolder(targetPath)
   );
+  ipcMain.handle(IPC_CHANNELS.desktopOpenExternalUrl, async (_, url: string) => {
+    const externalUrl = url.trim();
+    const parsed = new URL(externalUrl);
+
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error('Only HTTP and HTTPS links can be opened.');
+    }
+
+    await desktop.openExternal(externalUrl);
+  });
   ipcMain.handle(IPC_CHANNELS.desktopCopyText, (_, text: string) => desktop.writeText(text));
   ipcMain.handle(IPC_CHANNELS.windowFitContent, () => window.fitContent());
 };

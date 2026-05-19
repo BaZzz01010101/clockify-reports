@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { type FormEvent, type MouseEvent, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Anchor,
@@ -21,7 +21,13 @@ import {
 } from '@mantine/core';
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates';
 import { DateTime } from 'luxon';
-import type { ExportResult, ExportSuccessResult, ExportValidationResult } from '@shared/ipc';
+import type {
+  ExportOverlap,
+  ExportResult,
+  ExportSuccessResult,
+  ExportValidationResult,
+  OverlapRecordSummary
+} from '@shared/ipc';
 import type { ClockifySession, ExportFormat, WorkspaceOption } from '@shared/types';
 
 const EXPORT_FORMAT_OPTIONS: Array<{ value: ExportFormat; label: string }> = [
@@ -219,6 +225,16 @@ export const App = () => {
       await window.clockifyExporter.copyText(lastExport.path);
       setCopyLabel('Copied');
       window.setTimeout(() => setCopyLabel('Copy path'), 1600);
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error) });
+    }
+  };
+
+  const onOpenFixUrl = async (event: MouseEvent<HTMLAnchorElement>): Promise<void> => {
+    event.preventDefault();
+
+    try {
+      await window.clockifyExporter.openExternalUrl(validationResult?.fixUrl ?? 'https://app.clockify.me/calendar');
     } catch (error) {
       setMessage({ type: 'error', text: getErrorMessage(error) });
     }
@@ -429,31 +445,42 @@ export const App = () => {
         onClose={() => setValidationResult(null)}
         title="Export blocked"
         centered
+        size="lg"
       >
-        <Stack gap="sm">
-          <Text size="sm">{validationResult?.message}</Text>
+        <Stack gap="xs">
           <Text size="sm">
-            Review the overlapping records below. The date is shown first to make cleanup faster.
+            {validationResult?.message} Review the dated rows below to clean them up faster.
           </Text>
-          <Stack gap="xs">
-            {validationResult?.overlaps.map((overlap) => (
-              <Box key={`${overlap.first.id}-${overlap.second.id}`}>
-                <Text size="sm" fw={700}>
-                  {formatOverlapDate(overlap.date)}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {overlap.userName} - {formatOverlapDuration(overlap.overlapSeconds)}
-                </Text>
-                <Text size="xs">
-                  {formatRecordLabel(overlap.first)}
-                </Text>
-                <Text size="xs">
-                  {formatRecordLabel(overlap.second)}
-                </Text>
+          <Stack gap={4} className="overlap-list">
+            {validationResult?.overlaps.map((overlap, index) => (
+              <Box className="overlap-item" key={getOverlapKey(overlap, index)}>
+                <Box className="overlap-heading">
+                  <Text component="span" size="sm" fw={700}>
+                    {formatOverlapDate(overlap.date)}
+                  </Text>
+                  <Text component="span" size="xs" c="dimmed">
+                    {overlap.userName} - {formatOverlapDuration(overlap.overlapSeconds)}
+                  </Text>
+                </Box>
+                {[overlap.first, overlap.second].map((record, recordIndex) => (
+                  <Box className="overlap-record" key={`${formatRecordTimeRange(record)}-${recordIndex}`}>
+                    <Text component="span" size="xs" className="overlap-record-time">
+                      {formatRecordTimeRange(record)}
+                    </Text>
+                    <Text component="span" size="xs" className="overlap-record-details">
+                      <span className="overlap-record-project">{getRecordProjectName(record)}</span>
+                      <span> - {getRecordDescription(record)}</span>
+                    </Text>
+                  </Box>
+                ))}
               </Box>
             ))}
           </Stack>
-          <Anchor href={validationResult?.fixUrl ?? 'https://app.clockify.me/calendar'} target="_blank" rel="noreferrer">
+          <Anchor
+            className="overlap-calendar-link"
+            href={validationResult?.fixUrl ?? 'https://app.clockify.me/calendar'}
+            onClick={(event) => void onOpenFixUrl(event)}
+          >
             Open Clockify calendar
           </Anchor>
           <Group justify="flex-end">
@@ -553,18 +580,27 @@ const formatOverlapDuration = (seconds: number): string => {
   return `${minutes} min overlap`;
 };
 
-const formatRecordLabel = (record: {
-  id: string;
-  projectName: string;
-  description: string;
-  start: string;
-  end: string;
-}): string => {
-  const project = record.projectName || 'No project';
-  const description = record.description || 'No description';
+const getOverlapKey = (overlap: ExportOverlap, index: number): string =>
+  [
+    overlap.date,
+    overlap.userName,
+    overlap.first.start,
+    overlap.first.end,
+    overlap.second.start,
+    overlap.second.end,
+    index
+  ].join('|');
 
-  return `${project} - ${description} (${formatTime(record.start)}-${formatTime(record.end)}) [${record.id}]`;
-};
+const formatRecordTimeRange = (record: Pick<OverlapRecordSummary, 'start' | 'end'>): string =>
+  `${formatTime(record.start)}-${formatTime(record.end)}`;
+
+const getRecordProjectName = (record: Pick<OverlapRecordSummary, 'projectName'>): string =>
+  cleanRecordText(record.projectName) || 'No project';
+
+const getRecordDescription = (record: Pick<OverlapRecordSummary, 'description'>): string =>
+  cleanRecordText(record.description) || 'No description';
+
+const cleanRecordText = (value: string | null | undefined): string => value?.trim() ?? '';
 
 const formatTime = (iso: string): string => {
   const parsed = DateTime.fromISO(iso, { setZone: true });

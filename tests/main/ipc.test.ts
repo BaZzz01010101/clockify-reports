@@ -21,6 +21,7 @@ describe('registerIpcHandlers', () => {
     const desktop = {
       openPath: vi.fn().mockResolvedValue(''),
       showItemInFolder: vi.fn(),
+      openExternal: vi.fn().mockResolvedValue(undefined),
       writeText: vi.fn()
     };
     const window = {
@@ -34,7 +35,7 @@ describe('registerIpcHandlers', () => {
       window
     });
 
-    expect(ipcMain.handle).toHaveBeenCalledTimes(9);
+    expect(ipcMain.handle).toHaveBeenCalledTimes(10);
     await expect(handlers.get(IPC_CHANNELS.authGetSession)?.()).resolves.toEqual({ apiKeyPresent: false });
     await expect(handlers.get(IPC_CHANNELS.authValidateAndStoreApiKey)?.({}, 'api-key')).resolves.toEqual({
       apiKeyPresent: true,
@@ -61,10 +62,14 @@ describe('registerIpcHandlers', () => {
     });
     await expect(handlers.get(IPC_CHANNELS.desktopOpenFile)?.({}, 'D:/Exports/report.json')).resolves.toBeUndefined();
     expect(handlers.get(IPC_CHANNELS.desktopOpenFolder)?.({}, 'D:/Exports/report.json')).toBeUndefined();
+    await expect(
+      handlers.get(IPC_CHANNELS.desktopOpenExternalUrl)?.({}, 'https://app.clockify.me/calendar')
+    ).resolves.toBeUndefined();
     expect(handlers.get(IPC_CHANNELS.desktopCopyText)?.({}, 'D:/Exports/report.json')).toBeUndefined();
     await expect(handlers.get(IPC_CHANNELS.windowFitContent)?.()).resolves.toBeUndefined();
     expect(desktop.openPath).toHaveBeenCalledWith('D:/Exports/report.json');
     expect(desktop.showItemInFolder).toHaveBeenCalledWith('D:/Exports/report.json');
+    expect(desktop.openExternal).toHaveBeenCalledWith('https://app.clockify.me/calendar');
     expect(desktop.writeText).toHaveBeenCalledWith('D:/Exports/report.json');
     expect(window.fitContent).toHaveBeenCalled();
   });

@@ -26,3 +26,48 @@ body {
   border-color: rgba(24, 38, 51, 0.12);
   max-width: 100%;
 }
+
+.overlap-list {
+  max-height: min(300px, 48vh);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.overlap-item + .overlap-item {
+  margin-top: 6px;
+}
+
+.overlap-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  margin-bottom: 2px;
+}
+
+.overlap-record {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  line-height: 1.25;
+}
+
+.overlap-record-time {
+  color: var(--mantine-color-dimmed);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.overlap-record-details {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.overlap-record-project {
+  font-weight: 600;
+}
+
+.overlap-calendar-link {
+  align-self: flex-start;
+}

@@ -11,6 +11,7 @@ const api: ClockifyDesktopApi = {
     ipcRenderer.invoke(IPC_CHANNELS.clockifyExportDetailedReport, request),
   openFile: (path) => ipcRenderer.invoke(IPC_CHANNELS.desktopOpenFile, path),
   openFolder: (path) => ipcRenderer.invoke(IPC_CHANNELS.desktopOpenFolder, path),
+  openExternalUrl: (url) => ipcRenderer.invoke(IPC_CHANNELS.desktopOpenExternalUrl, url),
   copyText: (text) => ipcRenderer.invoke(IPC_CHANNELS.desktopCopyText, text),
   fitWindowToContent: () => ipcRenderer.invoke(IPC_CHANNELS.windowFitContent)
 };
