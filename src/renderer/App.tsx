@@ -5,12 +5,10 @@ import {
   Badge,
   Box,
   Button,
-  Container,
   Divider,
   Group,
   Loader,
   Modal,
-  Paper,
   PasswordInput,
   SegmentedControl,
   Select,
@@ -262,183 +260,179 @@ export const App = () => {
   };
 
   return (
-    <Box className="app-shell">
-      <Container size={560} py={8}>
-        <Paper className="tool-panel" radius="md" p="sm" shadow="xs" withBorder>
-          <Stack gap="xs">
-            <Group justify="space-between" align="center" wrap="nowrap">
-              <Title order={1} size="h5">
-                Clockify reports
-              </Title>
+    <Box className="app-client-area">
+      <Stack gap="xs">
+        <Group justify="space-between" align="center" wrap="nowrap">
+          <Title order={1} size="h5">
+            Clockify reports
+          </Title>
 
-              <Group gap="xs" wrap="nowrap">
-                <Badge color={session.apiKeyPresent ? 'teal' : 'gray'} variant="light" size="sm">
-                  {session.apiKeyPresent ? 'CONNECTED' : 'DISCONNECTED'}
-                </Badge>
-                {session.apiKeyPresent ? (
-                  <Button variant="default" size="compact-sm" onClick={onDisconnect}>
-                    Disconnect
-                  </Button>
-                ) : null}
-              </Group>
-            </Group>
-
-            {message ? (
-              <Alert color="red" radius="md" variant="light" p="sm">
-                <Text size="xs">{message.text}</Text>
-              </Alert>
+          <Group gap="xs" wrap="nowrap">
+            <Badge color={session.apiKeyPresent ? 'teal' : 'gray'} variant="light" size="sm">
+              {session.apiKeyPresent ? 'CONNECTED' : 'DISCONNECTED'}
+            </Badge>
+            {session.apiKeyPresent ? (
+              <Button variant="default" size="compact-sm" onClick={onDisconnect}>
+                Disconnect
+              </Button>
             ) : null}
+          </Group>
+        </Group>
 
-            {busy ? (
-              <Group gap="xs">
-                <Loader size="xs" />
+        {message ? (
+          <Alert color="red" radius="md" variant="light" p="sm">
+            <Text size="xs">{message.text}</Text>
+          </Alert>
+        ) : null}
+
+        {busy ? (
+          <Group gap="xs">
+            <Loader size="xs" />
+            <Text size="xs" c="dimmed">
+              Loading state...
+            </Text>
+          </Group>
+        ) : null}
+
+        {!busy && !session.apiKeyPresent ? (
+          <form onSubmit={(event) => void onConnect(event)}>
+            <Stack gap="xs">
+              <PasswordInput
+                autoComplete="off"
+                label="API key"
+                name="apiKey"
+                onChange={(event) => setApiKey(event.currentTarget.value)}
+                placeholder="Paste Clockify API key"
+                radius="md"
+                size="sm"
+                value={apiKey}
+              />
+              <Group justify="space-between" align="center">
                 <Text size="xs" c="dimmed">
-                  Loading state...
+                  Stored in local keychain
                 </Text>
+                <Button type="submit" loading={connecting} disabled={!apiKey.trim()} size="sm">
+                  Connect
+                </Button>
               </Group>
-            ) : null}
+            </Stack>
+          </form>
+        ) : null}
 
-            {!busy && !session.apiKeyPresent ? (
-              <form onSubmit={(event) => void onConnect(event)}>
-                <Stack gap="xs">
-                  <PasswordInput
-                    autoComplete="off"
-                    label="API key"
-                    name="apiKey"
-                    onChange={(event) => setApiKey(event.currentTarget.value)}
-                    placeholder="Paste Clockify API key"
-                    radius="md"
-                    size="sm"
-                    value={apiKey}
-                  />
-                  <Group justify="space-between" align="center">
-                    <Text size="xs" c="dimmed">
-                      Stored in local keychain
-                    </Text>
-                    <Button type="submit" loading={connecting} disabled={!apiKey.trim()} size="sm">
-                      Connect
-                    </Button>
-                  </Group>
-                </Stack>
-              </form>
-            ) : null}
+        {!busy && session.apiKeyPresent ? (
+          <>
+            <Text size="sm" c="dimmed">
+              Signed in as{' '}
+              <Text span c="dark" fw={600}>
+                {session.userEmail ?? 'Clockify user'}
+              </Text>{' '}
+              - {session.userTimeZone ?? 'UTC'}
+            </Text>
 
-            {!busy && session.apiKeyPresent ? (
-              <>
-                <Text size="sm" c="dimmed">
-                  Signed in as{' '}
-                  <Text span c="dark" fw={600}>
-                    {session.userEmail ?? 'Clockify user'}
-                  </Text>{' '}
-                  - {session.userTimeZone ?? 'UTC'}
-                </Text>
+            <Select
+              aria-label="Workspace"
+              allowDeselect={false}
+              comboboxProps={{ withinPortal: false }}
+              data={workspaces.map((workspace) => ({
+                value: workspace.id,
+                label: workspace.name
+              }))}
+              label="Workspace"
+              onChange={(value) => setSelectedWorkspaceId(value ?? '')}
+              radius="md"
+              searchable={false}
+              size="sm"
+              value={selectedWorkspaceId}
+            />
 
+            <Stack gap={6}>
+              <Text size="sm" fw={600}>
+                Range
+              </Text>
+              <SegmentedControl
+                aria-label="Range preset"
+                data={[
+                  ...presets.map((preset) => ({ label: preset.label, value: preset.key })),
+                  { label: 'Custom', value: 'custom' }
+                ]}
+                fullWidth
+                onChange={onPresetChange}
+                radius="md"
+                size="xs"
+                value={selectedPreset}
+              />
+              <DatePickerInput
+                allowSingleDateInRange
+                aria-label="Date range"
+                clearable={false}
+                dropdownType="modal"
+                label="Selected:"
+                onChange={onRangeChange}
+                placeholder="Pick start and end date"
+                popoverProps={{ withinPortal: false }}
+                radius="md"
+                size="sm"
+                type="range"
+                value={dateRange}
+                valueFormat="DD MMM YYYY"
+              />
+            </Stack>
+
+            <Group align="flex-end" wrap="nowrap">
+              <Box style={{ flex: 1 }}>
                 <Select
-                  aria-label="Workspace"
+                  aria-label="Format"
                   allowDeselect={false}
                   comboboxProps={{ withinPortal: false }}
-                  data={workspaces.map((workspace) => ({
-                    value: workspace.id,
-                    label: workspace.name
-                  }))}
-                  label="Workspace"
-                  onChange={(value) => setSelectedWorkspaceId(value ?? '')}
+                  data={EXPORT_FORMAT_OPTIONS}
+                  label="Format"
+                  onChange={(value) => setFormat((value as ExportFormat) ?? 'json')}
                   radius="md"
                   searchable={false}
                   size="sm"
-                  value={selectedWorkspaceId}
+                  value={format}
                 />
+              </Box>
+              <Button size="sm" loading={exporting} disabled={!canExport} onClick={() => void onExport()}>
+                Export report
+              </Button>
+            </Group>
 
-                <Stack gap={6}>
-                  <Text size="sm" fw={600}>
-                    Range
+            {lastExport ? (
+              <>
+                <Divider />
+                <Stack gap={4}>
+                  <Text size="xs" c="dimmed" fw={600}>
+                    Last export
                   </Text>
-                  <SegmentedControl
-                    aria-label="Range preset"
-                    data={[
-                      ...presets.map((preset) => ({ label: preset.label, value: preset.key })),
-                      { label: 'Custom', value: 'custom' }
-                    ]}
-                    fullWidth
-                    onChange={onPresetChange}
-                    radius="md"
-                    size="xs"
-                    value={selectedPreset}
-                  />
-                  <DatePickerInput
-                    allowSingleDateInRange
-                    aria-label="Date range"
-                    clearable={false}
-                    dropdownType="modal"
-                    label="Selected:"
-                    onChange={onRangeChange}
-                    placeholder="Pick start and end date"
-                    popoverProps={{ withinPortal: false }}
-                    radius="md"
-                    size="sm"
-                    type="range"
-                    value={dateRange}
-                    valueFormat="DD MMM YYYY"
-                  />
+                  <Text size="sm" fw={600}>
+                    {getFileName(lastExport.path)}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {formatRecordCount(lastExport.recordCount)}
+                  </Text>
+                  <Tooltip label={lastExport.path} multiline withArrow>
+                    <Text size="xs" c="dimmed" ff="monospace">
+                      {shortenPath(lastExport.path)}
+                    </Text>
+                  </Tooltip>
+                  <Group gap="xs">
+                    <Button variant="default" size="compact-sm" onClick={() => void onOpenFile()}>
+                      Open file
+                    </Button>
+                    <Button variant="default" size="compact-sm" onClick={() => void onOpenFolder()}>
+                      Open folder
+                    </Button>
+                    <Button variant="default" size="compact-sm" onClick={() => void onCopyPath()}>
+                      {copyLabel}
+                    </Button>
+                  </Group>
                 </Stack>
-
-                <Group align="flex-end" wrap="nowrap">
-                  <Box style={{ flex: 1 }}>
-                    <Select
-                      aria-label="Format"
-                      allowDeselect={false}
-                      comboboxProps={{ withinPortal: false }}
-                      data={EXPORT_FORMAT_OPTIONS}
-                      label="Format"
-                      onChange={(value) => setFormat((value as ExportFormat) ?? 'json')}
-                      radius="md"
-                      searchable={false}
-                      size="sm"
-                      value={format}
-                    />
-                  </Box>
-                  <Button size="sm" loading={exporting} disabled={!canExport} onClick={() => void onExport()}>
-                    Export report
-                  </Button>
-                </Group>
-
-                {lastExport ? (
-                  <>
-                    <Divider />
-                    <Stack gap={4}>
-                      <Text size="xs" c="dimmed" fw={600}>
-                        Last export
-                      </Text>
-                      <Text size="sm" fw={600}>
-                        {getFileName(lastExport.path)}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {formatRecordCount(lastExport.recordCount)}
-                      </Text>
-                      <Tooltip label={lastExport.path} multiline withArrow>
-                        <Text size="xs" c="dimmed" ff="monospace">
-                          {shortenPath(lastExport.path)}
-                        </Text>
-                      </Tooltip>
-                      <Group gap="xs">
-                        <Button variant="default" size="compact-sm" onClick={() => void onOpenFile()}>
-                          Open file
-                        </Button>
-                        <Button variant="default" size="compact-sm" onClick={() => void onOpenFolder()}>
-                          Open folder
-                        </Button>
-                        <Button variant="default" size="compact-sm" onClick={() => void onCopyPath()}>
-                          {copyLabel}
-                        </Button>
-                      </Group>
-                    </Stack>
-                  </>
-                ) : null}
               </>
             ) : null}
-          </Stack>
-        </Paper>
-      </Container>
+          </>
+        ) : null}
+      </Stack>
 
       <Modal
         opened={validationResult !== null}

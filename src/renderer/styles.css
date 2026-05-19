@@ -14,17 +14,12 @@ body,
 
 body {
   margin: 0;
-  background: #f4f6f8;
-}
-
-.app-shell {
-  padding: 8px 0;
-}
-
-.tool-panel {
   background: #ffffff;
-  border-color: rgba(24, 38, 51, 0.12);
-  max-width: 100%;
+}
+
+.app-client-area {
+  padding: 8px 16px 16px;
+  min-width: 580px;
 }
 
 .overlap-list {

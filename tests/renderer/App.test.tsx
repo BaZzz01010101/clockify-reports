@@ -60,6 +60,19 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /connect/i })).toBeInTheDocument();
   });
 
+  it('renders the app directly in the window client area', async () => {
+    vi.mocked(api.getSession).mockResolvedValue({
+      apiKeyPresent: false
+    });
+
+    const { container } = renderApp();
+
+    expect(await screen.findByLabelText(/api key/i)).toBeInTheDocument();
+    expect(container.querySelector('.app-client-area')).toBeInTheDocument();
+    expect(container.querySelector('.app-shell')).not.toBeInTheDocument();
+    expect(container.querySelector('.tool-panel')).not.toBeInTheDocument();
+  });
+
   it('derives the default preset from workday boundaries', () => {
     expect(getDefaultPresetKey(DateTime.fromISO('2026-05-29'))).toBe('thisWeek');
     expect(getDefaultPresetKey(DateTime.fromISO('2026-06-01'))).toBe('lastWeek');
