@@ -2,8 +2,11 @@
 
 import '@testing-library/jest-dom/vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { App } from '@renderer/App';
+import { MantineProvider } from '@mantine/core';
+import { DateTime } from 'luxon';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { App, getDefaultPresetKey } from '@renderer/App';
+import { appTheme } from '@renderer/theme';
 import type { ClockifyDesktopApi } from '@shared/ipc';
 
 declare global {
@@ -18,16 +21,30 @@ describe('App', () => {
     validateAndStoreApiKey: vi.fn(),
     clearApiKey: vi.fn(),
     getWorkspaces: vi.fn(),
-    exportDetailedReport: vi.fn()
+    exportDetailedReport: vi.fn(),
+    openFile: vi.fn(),
+    openFolder: vi.fn(),
+    copyText: vi.fn(),
+    fitWindowToContent: vi.fn()
   };
 
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-05-19T10:00:00.000Z'));
     window.clockifyExporter = api;
     vi.mocked(api.getSession).mockReset();
     vi.mocked(api.validateAndStoreApiKey).mockReset();
     vi.mocked(api.clearApiKey).mockReset();
     vi.mocked(api.getWorkspaces).mockReset();
     vi.mocked(api.exportDetailedReport).mockReset();
+    vi.mocked(api.openFile).mockReset();
+    vi.mocked(api.openFolder).mockReset();
+    vi.mocked(api.copyText).mockReset();
+    vi.mocked(api.fitWindowToContent).mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows the API key form when no credentials are stored', async () => {
@@ -35,13 +52,21 @@ describe('App', () => {
       apiKeyPresent: false
     });
 
-    render(<App />);
+    renderApp();
 
     expect(await screen.findByLabelText(/api key/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /connect/i })).toBeInTheDocument();
   });
 
-  it('connects, loads workspaces, and exports a report', async () => {
+  it('derives the default preset from workday boundaries', () => {
+    expect(getDefaultPresetKey(DateTime.fromISO('2026-05-29'))).toBe('thisWeek');
+    expect(getDefaultPresetKey(DateTime.fromISO('2026-06-01'))).toBe('lastWeek');
+    expect(getDefaultPresetKey(DateTime.fromISO('2026-06-30'))).toBe('thisMonth');
+    expect(getDefaultPresetKey(DateTime.fromISO('2026-10-01'))).toBe('lastMonth');
+    expect(getDefaultPresetKey(DateTime.fromISO('2026-05-19'))).toBe('thisWeek');
+  });
+
+  it('connects, loads workspaces, applies a preset, and exports a report', async () => {
     vi.mocked(api.getSession).mockResolvedValue({
       apiKeyPresent: false
     });
@@ -63,39 +88,116 @@ describe('App', () => {
       }
     });
     vi.mocked(api.exportDetailedReport).mockResolvedValue({
+      kind: 'success',
       path: 'D:/Exports/report.xlsx',
       recordCount: 1
     });
 
-    render(<App />);
+    renderApp();
 
     fireEvent.change(await screen.findByLabelText(/api key/i), {
       target: { value: 'secret-key' }
     });
-    fireEvent.click(screen.getByRole('button', { name: /connect/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
 
     expect(await screen.findByText(/user@example.com/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/workspace/i)).toHaveValue('ws-1');
-    expect(screen.getByLabelText(/format/i)).toHaveValue('xlsx');
+    expect(screen.getByLabelText(/workspace/i)).toHaveValue('Alpha');
+    expect(screen.getByLabelText(/format/i)).toHaveValue('Excel (.xlsx)');
+    expect(screen.getByLabelText(/^selected:$/i)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /this week/i })).toBeChecked();
 
-    fireEvent.change(screen.getByLabelText(/from date/i), {
-      target: { value: '2026-05-04' }
-    });
-    fireEvent.change(screen.getByLabelText(/to date/i), {
-      target: { value: '2026-05-10' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /export/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /last week/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /custom/i }));
+    expect(screen.getByRole('radio', { name: /custom/i })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: /last week/i }));
+    fireEvent.click(screen.getByRole('button', { name: /export report/i }));
 
     await waitFor(() =>
       expect(api.exportDetailedReport).toHaveBeenCalledWith({
         workspaceId: 'ws-1',
         workspaceName: 'Alpha',
-        fromDate: '2026-05-04',
-        toDate: '2026-05-10',
+        fromDate: '2026-05-11',
+        toDate: '2026-05-17',
         format: 'xlsx'
       })
     );
-    expect(await screen.findByText(/exported 1 entries/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/last export/i)).toBeInTheDocument();
+    expect(screen.getByText(/^report\.xlsx$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^1 entry$/i)).toBeInTheDocument();
     expect(screen.getByText(/D:\/Exports\/report\.xlsx/i)).toBeInTheDocument();
   });
+
+  it('shows a validation dialog when overlapping time entries block export', async () => {
+    vi.mocked(api.getSession).mockResolvedValue({
+      apiKeyPresent: false
+    });
+    vi.mocked(api.validateAndStoreApiKey).mockResolvedValue({
+      apiKeyPresent: true,
+      userEmail: 'user@example.com',
+      userTimeZone: 'Europe/Madrid'
+    });
+    vi.mocked(api.getWorkspaces).mockResolvedValue({
+      session: {
+        apiKeyPresent: true,
+        userEmail: 'user@example.com',
+        userTimeZone: 'Europe/Madrid'
+      },
+      workspaces: [{ id: 'ws-1', name: 'Alpha' }],
+      preferences: {
+        lastWorkspaceId: 'ws-1',
+        lastExportFormat: 'csv'
+      }
+    });
+    vi.mocked(api.exportDetailedReport).mockResolvedValue({
+      kind: 'validation-error',
+      message: 'Overlapping time entries were found.',
+      fixUrl: 'https://app.clockify.me/calendar',
+      overlaps: [
+        {
+          date: '2026-05-04',
+          userName: 'Ada Lovelace',
+          overlapSeconds: 1800,
+          first: {
+            id: 'entry-1',
+            projectName: 'Clockify',
+            description: 'Morning analysis',
+            start: '2026-05-04T08:00:00.000Z',
+            end: '2026-05-04T10:00:00.000Z'
+          },
+          second: {
+            id: 'entry-2',
+            projectName: 'Clockify',
+            description: 'Overlapping review',
+            start: '2026-05-04T09:30:00.000Z',
+            end: '2026-05-04T10:30:00.000Z'
+          }
+        }
+      ]
+    } as never);
+
+    renderApp();
+
+    fireEvent.change(await screen.findByLabelText(/api key/i), {
+      target: { value: 'secret-key' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
+    expect(await screen.findByText(/user@example.com/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /export report/i }));
+
+    expect(await screen.findByText(/overlapping time entries were found/i)).toBeInTheDocument();
+    expect(screen.getByText(/04 May 2026/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open clockify calendar/i })).toHaveAttribute(
+      'href',
+      'https://app.clockify.me/calendar'
+    );
+    expect(screen.getByRole('button', { name: /^ok$/i })).toBeInTheDocument();
+  });
 });
+
+const renderApp = () =>
+  render(
+    <MantineProvider theme={appTheme}>
+      <App />
+    </MantineProvider>
+  );

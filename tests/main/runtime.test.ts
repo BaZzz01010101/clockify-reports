@@ -65,6 +65,7 @@ describe('createClockifyExporterService', () => {
     });
 
     expect(exportResult).toEqual({
+      kind: 'success',
       path: path.join(
         outputDir,
         'clockify-detailed-smoke-workspace-2026-05-04-2026-05-10.csv'
@@ -72,7 +73,7 @@ describe('createClockifyExporterService', () => {
       recordCount: 1
     });
 
-    const exportedCsv = await fs.readFile(exportResult?.path ?? '', 'utf8');
+    const exportedCsv = await fs.readFile(exportResult && exportResult.kind === 'success' ? exportResult.path : '', 'utf8');
     expect(exportedCsv).toContain('entry-1');
 
     await expect(service.getWorkspaces()).resolves.toEqual({

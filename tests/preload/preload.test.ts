@@ -39,6 +39,10 @@ describe('preload bridge', () => {
       toDate: '2026-05-10',
       format: 'csv'
     });
+    await api.openFile('D:/Exports/report.csv');
+    await api.openFolder('D:/Exports/report.csv');
+    await api.copyText('D:/Exports/report.csv');
+    await api.fitWindowToContent();
 
     expect(invoke).toHaveBeenNthCalledWith(1, IPC_CHANNELS.authGetSession);
     expect(invoke).toHaveBeenNthCalledWith(2, IPC_CHANNELS.authValidateAndStoreApiKey, 'secret');
@@ -52,5 +56,9 @@ describe('preload bridge', () => {
         format: 'csv'
       })
     );
+    expect(invoke).toHaveBeenNthCalledWith(6, IPC_CHANNELS.desktopOpenFile, 'D:/Exports/report.csv');
+    expect(invoke).toHaveBeenNthCalledWith(7, IPC_CHANNELS.desktopOpenFolder, 'D:/Exports/report.csv');
+    expect(invoke).toHaveBeenNthCalledWith(8, IPC_CHANNELS.desktopCopyText, 'D:/Exports/report.csv');
+    expect(invoke).toHaveBeenNthCalledWith(9, IPC_CHANNELS.windowFitContent);
   });
 });

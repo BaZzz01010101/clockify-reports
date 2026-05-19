@@ -24,23 +24,24 @@ test('connects in smoke mode and exports a CSV report', async () => {
   try {
     const window = await app.firstWindow();
 
-    await expect(window.getByRole('heading', { name: /clockify reports/i })).toBeVisible();
+    await expect(window.getByText(/clockify reports/i)).toBeVisible();
 
     await window.getByLabel('API key').fill('smoke-key');
     await window.getByRole('button', { name: 'Connect' }).click();
 
     await expect(window.getByText('smoke.user@example.com')).toBeVisible();
 
-    await window.getByLabel('From date').fill('2026-05-04');
-    await window.getByLabel('To date').fill('2026-05-10');
-    await window.getByLabel('Format').selectOption('csv');
-    await window.getByRole('button', { name: 'Export' }).click();
+    await window.getByRole('combobox', { name: 'Format' }).click();
+    await window.getByRole('option', { name: 'CSV' }).click();
+    await window.getByText('Last week').click();
+    await window.getByRole('button', { name: 'Export report' }).click();
 
-    await expect(window.getByText(/exported 1 entries\./i)).toBeVisible();
+    await expect(window.getByText(/last export/i)).toBeVisible();
+    await expect(window.getByText(/^clockify-detailed-smoke-workspace-2026-05-11-2026-05-17\.csv$/i)).toBeVisible();
 
     const exportedFiles = await fs.readdir(outputDirectory);
 
-    expect(exportedFiles).toEqual(['clockify-detailed-smoke-workspace-2026-05-04-2026-05-10.csv']);
+    expect(exportedFiles).toEqual(['clockify-detailed-smoke-workspace-2026-05-11-2026-05-17.csv']);
 
     const exportedCsv = await fs.readFile(path.join(outputDirectory, exportedFiles[0]), 'utf8');
 

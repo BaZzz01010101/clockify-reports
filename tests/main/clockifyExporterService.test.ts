@@ -164,6 +164,7 @@ describe('ClockifyExporterService', () => {
     const service = createService();
 
     await expect(service.exportDetailedReport(request)).resolves.toEqual({
+      kind: 'success',
       path: 'D:/Exports/clockify-detailed-alpha-2026-05-04-2026-05-10.csv',
       recordCount: 1
     });
@@ -184,6 +185,79 @@ describe('ClockifyExporterService', () => {
       lastWorkspaceId: 'ws-1',
       lastExportFormat: 'csv'
     });
+  });
+
+  it('returns a validation error when time entries overlap by more than one minute', async () => {
+    getApiKey.mockResolvedValue('stored-key');
+    validateApiKey.mockResolvedValue({
+      apiKeyPresent: true,
+      userEmail: 'user@example.com',
+      userTimeZone: 'Europe/Madrid'
+    });
+    getDetailedReport.mockResolvedValue({
+      totals: [{ totalTime: 7200 }],
+      timeentries: [
+        {
+          id: 'entry-1',
+          userName: 'Ada Lovelace',
+          clientName: 'CAKE',
+          projectName: 'Clockify',
+          taskName: 'Research',
+          description: 'Morning analysis',
+          tags: [],
+          billable: true,
+          timeInterval: {
+            start: '2026-05-04T08:00:00.000Z',
+            end: '2026-05-04T10:00:00.000Z',
+            duration: 'PT2H'
+          }
+        },
+        {
+          id: 'entry-2',
+          userName: 'Ada Lovelace',
+          clientName: 'CAKE',
+          projectName: 'Clockify',
+          taskName: 'Research',
+          description: 'Overlapping review',
+          tags: [],
+          billable: true,
+          timeInterval: {
+            start: '2026-05-04T09:30:00.000Z',
+            end: '2026-05-04T10:30:00.000Z',
+            duration: 'PT1H'
+          }
+        }
+      ]
+    });
+
+    const request: ExportRequest = {
+      workspaceId: 'ws-1',
+      workspaceName: 'Alpha',
+      fromDate: '2026-05-04',
+      toDate: '2026-05-10',
+      format: 'csv'
+    };
+
+    const service = createService();
+
+    await expect(service.exportDetailedReport(request)).resolves.toMatchObject({
+      kind: 'validation-error',
+      fixUrl: 'https://app.clockify.me/calendar',
+      overlaps: [
+        {
+          date: '2026-05-04',
+          userName: 'Ada Lovelace',
+          first: {
+            id: 'entry-1'
+          },
+          second: {
+            id: 'entry-2'
+          }
+        }
+      ]
+    });
+    expect(saveExport).not.toHaveBeenCalled();
+    expect(writePreferences).not.toHaveBeenCalled();
   });
 
   it('returns apiKeyPresent false when no credentials are stored', async () => {

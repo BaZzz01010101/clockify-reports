@@ -8,7 +8,11 @@ const api: ClockifyDesktopApi = {
   clearApiKey: () => ipcRenderer.invoke(IPC_CHANNELS.authClearApiKey),
   getWorkspaces: () => ipcRenderer.invoke(IPC_CHANNELS.clockifyGetWorkspaces),
   exportDetailedReport: (request) =>
-    ipcRenderer.invoke(IPC_CHANNELS.clockifyExportDetailedReport, request)
+    ipcRenderer.invoke(IPC_CHANNELS.clockifyExportDetailedReport, request),
+  openFile: (path) => ipcRenderer.invoke(IPC_CHANNELS.desktopOpenFile, path),
+  openFolder: (path) => ipcRenderer.invoke(IPC_CHANNELS.desktopOpenFolder, path),
+  copyText: (text) => ipcRenderer.invoke(IPC_CHANNELS.desktopCopyText, text),
+  fitWindowToContent: () => ipcRenderer.invoke(IPC_CHANNELS.windowFitContent)
 };
 
 contextBridge.exposeInMainWorld('clockifyExporter', api);

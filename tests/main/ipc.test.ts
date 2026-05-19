@@ -16,15 +16,25 @@ describe('registerIpcHandlers', () => {
       validateAndStoreApiKey: vi.fn().mockResolvedValue({ apiKeyPresent: true, userEmail: 'user@example.com' }),
       clearApiKey: vi.fn().mockResolvedValue({ apiKeyPresent: false }),
       getWorkspaces: vi.fn().mockResolvedValue({ session: { apiKeyPresent: true }, workspaces: [], preferences: {} }),
-      exportDetailedReport: vi.fn().mockResolvedValue({ path: 'D:/Exports/report.json', recordCount: 4 })
+      exportDetailedReport: vi.fn().mockResolvedValue({ kind: 'success', path: 'D:/Exports/report.json', recordCount: 4 })
+    };
+    const desktop = {
+      openPath: vi.fn().mockResolvedValue(''),
+      showItemInFolder: vi.fn(),
+      writeText: vi.fn()
+    };
+    const window = {
+      fitContent: vi.fn().mockResolvedValue(undefined)
     };
 
     registerIpcHandlers({
       ipcMain,
-      service
+      service,
+      desktop,
+      window
     });
 
-    expect(ipcMain.handle).toHaveBeenCalledTimes(5);
+    expect(ipcMain.handle).toHaveBeenCalledTimes(9);
     await expect(handlers.get(IPC_CHANNELS.authGetSession)?.()).resolves.toEqual({ apiKeyPresent: false });
     await expect(handlers.get(IPC_CHANNELS.authValidateAndStoreApiKey)?.({}, 'api-key')).resolves.toEqual({
       apiKeyPresent: true,
@@ -45,8 +55,17 @@ describe('registerIpcHandlers', () => {
       format: 'json'
     };
     await expect(handlers.get(IPC_CHANNELS.clockifyExportDetailedReport)?.({}, exportRequest)).resolves.toEqual({
+      kind: 'success',
       path: 'D:/Exports/report.json',
       recordCount: 4
     });
+    await expect(handlers.get(IPC_CHANNELS.desktopOpenFile)?.({}, 'D:/Exports/report.json')).resolves.toBeUndefined();
+    expect(handlers.get(IPC_CHANNELS.desktopOpenFolder)?.({}, 'D:/Exports/report.json')).toBeUndefined();
+    expect(handlers.get(IPC_CHANNELS.desktopCopyText)?.({}, 'D:/Exports/report.json')).toBeUndefined();
+    await expect(handlers.get(IPC_CHANNELS.windowFitContent)?.()).resolves.toBeUndefined();
+    expect(desktop.openPath).toHaveBeenCalledWith('D:/Exports/report.json');
+    expect(desktop.showItemInFolder).toHaveBeenCalledWith('D:/Exports/report.json');
+    expect(desktop.writeText).toHaveBeenCalledWith('D:/Exports/report.json');
+    expect(window.fitContent).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,28 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Anchor,
+  Badge,
+  Box,
+  Button,
+  Container,
+  Divider,
+  Group,
+  Loader,
+  Modal,
+  Paper,
+  PasswordInput,
+  SegmentedControl,
+  Select,
+  Stack,
+  Text,
+  Title,
+  Tooltip
+} from '@mantine/core';
+import { DatePickerInput, type DatesRangeValue } from '@mantine/dates';
+import { DateTime } from 'luxon';
+import type { ExportResult, ExportSuccessResult, ExportValidationResult } from '@shared/ipc';
 import type { ClockifySession, ExportFormat, WorkspaceOption } from '@shared/types';
-import type { ExportResult } from '@shared/ipc';
 
 const EXPORT_FORMAT_OPTIONS: Array<{ value: ExportFormat; label: string }> = [
   { value: 'json', label: 'JSON' },
@@ -8,35 +30,68 @@ const EXPORT_FORMAT_OPTIONS: Array<{ value: ExportFormat; label: string }> = [
   { value: 'xlsx', label: 'Excel (.xlsx)' }
 ];
 
-type StatusMessage =
-  | { type: 'success'; text: string; path?: string }
-  | { type: 'error'; text: string };
+type StatusMessage = { type: 'error'; text: string };
+type AppDateRange = DatesRangeValue<string>;
+type PresetKey = 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth' | 'custom';
+type RangePreset = {
+  key: Exclude<PresetKey, 'custom'>;
+  label: string;
+  range: AppDateRange;
+};
 
-const todayDate = (): string => new Date().toISOString().slice(0, 10);
+const buildRangePresets = (): RangePreset[] => {
+  const today = DateTime.local();
+  const previousWeek = today.minus({ weeks: 1 });
+  const previousMonth = today.minus({ months: 1 });
+
+  return [
+    { key: 'thisWeek', label: 'This week', range: toRange(today.startOf('week'), today.endOf('week')) },
+    { key: 'lastWeek', label: 'Last week', range: toRange(previousWeek.startOf('week'), previousWeek.endOf('week')) },
+    { key: 'thisMonth', label: 'This month', range: toRange(today.startOf('month'), today.endOf('month')) },
+    {
+      key: 'lastMonth',
+      label: 'Last month',
+      range: toRange(previousMonth.startOf('month'), previousMonth.endOf('month'))
+    }
+  ];
+};
 
 export const App = () => {
+  const presets = useMemo(() => buildRangePresets(), []);
+  const defaultPreset = useMemo(() => getDefaultPreset(presets, DateTime.local()), [presets]);
   const [apiKey, setApiKey] = useState('');
   const [session, setSession] = useState<ClockifySession>({ apiKeyPresent: false });
   const [workspaces, setWorkspaces] = useState<WorkspaceOption[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState('');
-  const [fromDate, setFromDate] = useState(todayDate());
-  const [toDate, setToDate] = useState(todayDate());
+  const [dateRange, setDateRange] = useState<AppDateRange>(defaultPreset.range);
+  const [selectedPreset, setSelectedPreset] = useState<PresetKey>(defaultPreset.key);
   const [format, setFormat] = useState<ExportFormat>('json');
   const [busy, setBusy] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState<StatusMessage | null>(null);
+  const [lastExport, setLastExport] = useState<ExportSuccessResult | null>(null);
+  const [validationResult, setValidationResult] = useState<ExportValidationResult | null>(null);
+  const [copyLabel, setCopyLabel] = useState('Copy path');
+
+  const [fromDate, toDate] = dateRange;
+  const selectedWorkspace = useMemo(
+    () => workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? null,
+    [selectedWorkspaceId, workspaces]
+  );
+  const canExport = Boolean(selectedWorkspace && fromDate && toDate && !exporting);
 
   useEffect(() => {
     void bootstrap();
   }, []);
 
-  const selectedWorkspace = useMemo(
-    () => workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? null,
-    [selectedWorkspaceId, workspaces]
-  );
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void window.clockifyExporter.fitWindowToContent();
+    }, 0);
 
-  const canExport = Boolean(selectedWorkspace && fromDate && toDate && !exporting);
+    return () => window.clearTimeout(timer);
+  }, [busy, session.apiKeyPresent, workspaces.length, lastExport, validationResult, message]);
 
   const bootstrap = async (): Promise<void> => {
     setBusy(true);
@@ -50,10 +105,7 @@ export const App = () => {
         await loadWorkspaces();
       }
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: getErrorMessage(error)
-      });
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setBusy(false);
     }
@@ -77,13 +129,12 @@ export const App = () => {
     try {
       const nextSession = await window.clockifyExporter.validateAndStoreApiKey(apiKey.trim());
       setSession(nextSession);
+      setLastExport(null);
+      setValidationResult(null);
       await loadWorkspaces();
       setApiKey('');
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: getErrorMessage(error)
-      });
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setConnecting(false);
     }
@@ -94,16 +145,19 @@ export const App = () => {
     setSession({ apiKeyPresent: false });
     setWorkspaces([]);
     setSelectedWorkspaceId('');
+    setLastExport(null);
+    setValidationResult(null);
     setMessage(null);
   };
 
   const onExport = async (): Promise<void> => {
-    if (!selectedWorkspace) {
+    if (!selectedWorkspace || !fromDate || !toDate) {
       return;
     }
 
     setExporting(true);
     setMessage(null);
+    setValidationResult(null);
 
     try {
       const result = await window.clockifyExporter.exportDetailedReport({
@@ -115,148 +169,435 @@ export const App = () => {
       });
 
       if (!result) {
-        setMessage({
-          type: 'success',
-          text: 'Export canceled.'
-        });
         return;
       }
 
-      setMessage(formatExportSuccess(result));
+      if (result.kind === 'validation-error') {
+        setValidationResult(result);
+        return;
+      }
+
+      setLastExport(result);
+      setCopyLabel('Copy path');
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: getErrorMessage(error)
-      });
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setExporting(false);
     }
   };
 
+  const onOpenFile = async (): Promise<void> => {
+    if (!lastExport) {
+      return;
+    }
+
+    try {
+      await window.clockifyExporter.openFile(lastExport.path);
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error) });
+    }
+  };
+
+  const onOpenFolder = async (): Promise<void> => {
+    if (!lastExport) {
+      return;
+    }
+
+    try {
+      await window.clockifyExporter.openFolder(lastExport.path);
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error) });
+    }
+  };
+
+  const onCopyPath = async (): Promise<void> => {
+    if (!lastExport) {
+      return;
+    }
+
+    try {
+      await window.clockifyExporter.copyText(lastExport.path);
+      setCopyLabel('Copied');
+      window.setTimeout(() => setCopyLabel('Copy path'), 1600);
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error) });
+    }
+  };
+
+  const onPresetChange = (value: string): void => {
+    const nextPreset = value as PresetKey;
+    setSelectedPreset(nextPreset);
+
+    if (nextPreset === 'custom') {
+      return;
+    }
+
+    const preset = presets.find((entry) => entry.key === nextPreset);
+    if (!preset) {
+      return;
+    }
+
+    setDateRange(preset.range);
+  };
+
+  const onRangeChange = (nextValue: AppDateRange): void => {
+    setDateRange(nextValue);
+    setSelectedPreset(getActivePreset(nextValue, presets));
+  };
+
   return (
-    <main className="app-shell">
-      <section className="panel">
-        <header className="panel-header">
-          <div>
-            <p className="eyebrow">Clockify cloud</p>
-            <h1>Clockify reports</h1>
-          </div>
-          {session.apiKeyPresent ? (
-            <button className="ghost-button" onClick={onDisconnect} type="button">
-              Disconnect
-            </button>
-          ) : null}
-        </header>
+    <Box className="app-shell">
+      <Container size={560} py={8}>
+        <Paper className="tool-panel" radius="md" p="sm" shadow="xs" withBorder>
+          <Stack gap="xs">
+            <Group justify="space-between" align="center" wrap="nowrap">
+              <Title order={1} size="h5">
+                Clockify reports
+              </Title>
 
-        {message ? (
-          <div className={`banner banner-${message.type}`}>
-            <p>{message.text}</p>
-            {'path' in message && message.path ? <code>{message.path}</code> : null}
-          </div>
-        ) : null}
+              <Group gap="xs" wrap="nowrap">
+                <Badge color={session.apiKeyPresent ? 'teal' : 'gray'} variant="light" size="sm">
+                  {session.apiKeyPresent ? 'CONNECTED' : 'DISCONNECTED'}
+                </Badge>
+                {session.apiKeyPresent ? (
+                  <Button variant="default" size="compact-sm" onClick={onDisconnect}>
+                    Disconnect
+                  </Button>
+                ) : null}
+              </Group>
+            </Group>
 
-        {busy ? <p className="muted">Loading exporter state...</p> : null}
+            {message ? (
+              <Alert color="red" radius="md" variant="light" p="sm">
+                <Text size="xs">{message.text}</Text>
+              </Alert>
+            ) : null}
 
-        {!busy && !session.apiKeyPresent ? (
-          <form className="stack" onSubmit={onConnect}>
-            <label className="field">
-              <span>API key</span>
-              <input
-                autoComplete="off"
-                name="apiKey"
-                onChange={(event) => setApiKey(event.currentTarget.value)}
-                placeholder="Paste your Clockify API key"
-                type="password"
-                value={apiKey}
-              />
-            </label>
-            <button disabled={!apiKey.trim() || connecting} type="submit">
-              {connecting ? 'Connecting...' : 'Connect'}
-            </button>
-          </form>
-        ) : null}
+            {busy ? (
+              <Group gap="xs">
+                <Loader size="xs" />
+                <Text size="xs" c="dimmed">
+                  Loading state...
+                </Text>
+              </Group>
+            ) : null}
 
-        {!busy && session.apiKeyPresent ? (
-          <div className="stack">
-            <div className="summary-card">
-              <p>
-                <strong>{session.userEmail ?? 'Clockify user'}</strong>
-              </p>
-              <p className="muted">Timezone: {session.userTimeZone ?? 'UTC'}</p>
-            </div>
+            {!busy && !session.apiKeyPresent ? (
+              <form onSubmit={(event) => void onConnect(event)}>
+                <Stack gap="xs">
+                  <PasswordInput
+                    autoComplete="off"
+                    label="API key"
+                    name="apiKey"
+                    onChange={(event) => setApiKey(event.currentTarget.value)}
+                    placeholder="Paste Clockify API key"
+                    radius="md"
+                    size="sm"
+                    value={apiKey}
+                  />
+                  <Group justify="space-between" align="center">
+                    <Text size="xs" c="dimmed">
+                      Stored in local keychain
+                    </Text>
+                    <Button type="submit" loading={connecting} disabled={!apiKey.trim()} size="sm">
+                      Connect
+                    </Button>
+                  </Group>
+                </Stack>
+              </form>
+            ) : null}
 
-            <label className="field">
-              <span>Workspace</span>
-              <select
-                aria-label="Workspace"
-                onChange={(event) => setSelectedWorkspaceId(event.currentTarget.value)}
-                value={selectedWorkspaceId}
-              >
-                {workspaces.map((workspace) => (
-                  <option key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!busy && session.apiKeyPresent ? (
+              <>
+                <Text size="sm" c="dimmed">
+                  Signed in as{' '}
+                  <Text span c="dark" fw={600}>
+                    {session.userEmail ?? 'Clockify user'}
+                  </Text>{' '}
+                  - {session.userTimeZone ?? 'UTC'}
+                </Text>
 
-            <div className="grid">
-              <label className="field">
-                <span>From date</span>
-                <input
-                  aria-label="From date"
-                  onChange={(event) => setFromDate(event.currentTarget.value)}
-                  type="date"
-                  value={fromDate}
+                <Select
+                  aria-label="Workspace"
+                  allowDeselect={false}
+                  comboboxProps={{ withinPortal: false }}
+                  data={workspaces.map((workspace) => ({
+                    value: workspace.id,
+                    label: workspace.name
+                  }))}
+                  label="Workspace"
+                  onChange={(value) => setSelectedWorkspaceId(value ?? '')}
+                  radius="md"
+                  searchable={false}
+                  size="sm"
+                  value={selectedWorkspaceId}
                 />
-              </label>
 
-              <label className="field">
-                <span>To date</span>
-                <input
-                  aria-label="To date"
-                  onChange={(event) => setToDate(event.currentTarget.value)}
-                  type="date"
-                  value={toDate}
-                />
-              </label>
-            </div>
+                <Stack gap={6}>
+                  <Text size="sm" fw={600}>
+                    Range
+                  </Text>
+                  <SegmentedControl
+                    aria-label="Range preset"
+                    data={[
+                      ...presets.map((preset) => ({ label: preset.label, value: preset.key })),
+                      { label: 'Custom', value: 'custom' }
+                    ]}
+                    fullWidth
+                    onChange={onPresetChange}
+                    radius="md"
+                    size="xs"
+                    value={selectedPreset}
+                  />
+                  <DatePickerInput
+                    allowSingleDateInRange
+                    aria-label="Date range"
+                    clearable={false}
+                    dropdownType="modal"
+                    label="Selected:"
+                    onChange={onRangeChange}
+                    placeholder="Pick start and end date"
+                    popoverProps={{ withinPortal: false }}
+                    radius="md"
+                    size="sm"
+                    type="range"
+                    value={dateRange}
+                    valueFormat="DD MMM YYYY"
+                  />
+                </Stack>
 
-            <label className="field">
-              <span>Format</span>
-              <select
-                aria-label="Format"
-                onChange={(event) => setFormat(event.currentTarget.value as ExportFormat)}
-                value={format}
-              >
-                {EXPORT_FORMAT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <Group align="flex-end" wrap="nowrap">
+                  <Box style={{ flex: 1 }}>
+                    <Select
+                      aria-label="Format"
+                      allowDeselect={false}
+                      comboboxProps={{ withinPortal: false }}
+                      data={EXPORT_FORMAT_OPTIONS}
+                      label="Format"
+                      onChange={(value) => setFormat((value as ExportFormat) ?? 'json')}
+                      radius="md"
+                      searchable={false}
+                      size="sm"
+                      value={format}
+                    />
+                  </Box>
+                  <Button size="sm" loading={exporting} disabled={!canExport} onClick={() => void onExport()}>
+                    Export report
+                  </Button>
+                </Group>
 
-            <button disabled={!canExport} onClick={onExport} type="button">
-              {exporting ? 'Exporting...' : 'Export'}
-            </button>
-          </div>
-        ) : null}
-      </section>
-    </main>
+                {lastExport ? (
+                  <>
+                    <Divider />
+                    <Stack gap={4}>
+                      <Text size="xs" c="dimmed" fw={600}>
+                        Last export
+                      </Text>
+                      <Text size="sm" fw={600}>
+                        {getFileName(lastExport.path)}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {formatRecordCount(lastExport.recordCount)}
+                      </Text>
+                      <Tooltip label={lastExport.path} multiline withArrow>
+                        <Text size="xs" c="dimmed" ff="monospace">
+                          {shortenPath(lastExport.path)}
+                        </Text>
+                      </Tooltip>
+                      <Group gap="xs">
+                        <Button variant="default" size="compact-sm" onClick={() => void onOpenFile()}>
+                          Open file
+                        </Button>
+                        <Button variant="default" size="compact-sm" onClick={() => void onOpenFolder()}>
+                          Open folder
+                        </Button>
+                        <Button variant="default" size="compact-sm" onClick={() => void onCopyPath()}>
+                          {copyLabel}
+                        </Button>
+                      </Group>
+                    </Stack>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+          </Stack>
+        </Paper>
+      </Container>
+
+      <Modal
+        opened={validationResult !== null}
+        onClose={() => setValidationResult(null)}
+        title="Export blocked"
+        centered
+      >
+        <Stack gap="sm">
+          <Text size="sm">{validationResult?.message}</Text>
+          <Text size="sm">
+            Review the overlapping records below. The date is shown first to make cleanup faster.
+          </Text>
+          <Stack gap="xs">
+            {validationResult?.overlaps.map((overlap) => (
+              <Box key={`${overlap.first.id}-${overlap.second.id}`}>
+                <Text size="sm" fw={700}>
+                  {formatOverlapDate(overlap.date)}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {overlap.userName} - {formatOverlapDuration(overlap.overlapSeconds)}
+                </Text>
+                <Text size="xs">
+                  {formatRecordLabel(overlap.first)}
+                </Text>
+                <Text size="xs">
+                  {formatRecordLabel(overlap.second)}
+                </Text>
+              </Box>
+            ))}
+          </Stack>
+          <Anchor href={validationResult?.fixUrl ?? 'https://app.clockify.me/calendar'} target="_blank" rel="noreferrer">
+            Open Clockify calendar
+          </Anchor>
+          <Group justify="flex-end">
+            <Button onClick={() => setValidationResult(null)}>OK</Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </Box>
   );
 };
 
-const formatExportSuccess = (result: ExportResult): StatusMessage => ({
-  type: 'success',
-  text: `Exported ${result.recordCount} entries.`,
-  path: result.path
-});
+const toRange = (start: DateTime, end: DateTime): AppDateRange => [
+  start.toISODate() ?? '',
+  end.toISODate() ?? ''
+];
+
+const isWorkday = (date: DateTime): boolean => date.weekday <= 5;
+
+const findBoundaryWorkday = (start: DateTime, end: DateTime, step: 1 | -1): string => {
+  let cursor = step === 1 ? start.startOf('day') : end.startOf('day');
+  const limit = step === 1 ? end.startOf('day') : start.startOf('day');
+
+  while ((step === 1 && cursor <= limit) || (step === -1 && cursor >= limit)) {
+    if (isWorkday(cursor)) {
+      return cursor.toISODate() ?? '';
+    }
+
+    cursor = cursor.plus({ days: step });
+  }
+
+  return start.toISODate() ?? '';
+};
+
+export const getDefaultPresetKey = (today: DateTime): Exclude<PresetKey, 'custom'> => {
+  const isoDate = today.toISODate() ?? '';
+  const weekStart = today.startOf('week');
+  const weekEnd = today.endOf('week');
+  const monthStart = today.startOf('month');
+  const monthEnd = today.endOf('month');
+  const firstWeekWorkday = findBoundaryWorkday(weekStart, weekEnd, 1);
+  const lastWeekWorkday = findBoundaryWorkday(weekStart, weekEnd, -1);
+  const firstMonthWorkday = findBoundaryWorkday(monthStart, monthEnd, 1);
+  const lastMonthWorkday = findBoundaryWorkday(monthStart, monthEnd, -1);
+
+  if (isoDate === lastWeekWorkday) {
+    return 'thisWeek';
+  }
+
+  if (isoDate === lastMonthWorkday) {
+    return 'thisMonth';
+  }
+
+  if (isoDate === firstWeekWorkday) {
+    return 'lastWeek';
+  }
+
+  if (isoDate === firstMonthWorkday) {
+    return 'lastMonth';
+  }
+
+  return 'thisWeek';
+};
+
+const isSameRange = (left: AppDateRange, right: AppDateRange): boolean =>
+  left[0] === right[0] && left[1] === right[1];
+
+const getActivePreset = (range: AppDateRange, presets: RangePreset[]): PresetKey => {
+  const matchedPreset = presets.find((preset) => isSameRange(range, preset.range));
+
+  return matchedPreset?.key ?? 'custom';
+};
+
+const getDefaultPreset = (
+  presets: RangePreset[],
+  today: DateTime
+): { key: Exclude<PresetKey, 'custom'>; range: AppDateRange } => {
+  const key = getDefaultPresetKey(today);
+  const matchedPreset = presets.find((preset) => preset.key === key);
+
+  return {
+    key,
+    range: matchedPreset?.range ?? toRange(today, today)
+  };
+};
+
+const formatRecordCount = (count: number): string => `${count} ${count === 1 ? 'entry' : 'entries'}`;
+
+const formatOverlapDate = (isoDate: string): string => {
+  const parsed = DateTime.fromISO(isoDate);
+
+  return parsed.isValid ? parsed.toFormat('dd LLL yyyy') : isoDate;
+};
+
+const formatOverlapDuration = (seconds: number): string => {
+  const minutes = Math.round(seconds / 60);
+
+  return `${minutes} min overlap`;
+};
+
+const formatRecordLabel = (record: {
+  id: string;
+  projectName: string;
+  description: string;
+  start: string;
+  end: string;
+}): string => {
+  const project = record.projectName || 'No project';
+  const description = record.description || 'No description';
+
+  return `${project} - ${description} (${formatTime(record.start)}-${formatTime(record.end)}) [${record.id}]`;
+};
+
+const formatTime = (iso: string): string => {
+  const parsed = DateTime.fromISO(iso, { setZone: true });
+
+  return parsed.isValid ? parsed.toFormat('HH:mm') : iso;
+};
+
+const getFileName = (targetPath: string): string => {
+  const normalized = targetPath.replace(/\\/g, '/');
+  const segments = normalized.split('/');
+
+  return segments[segments.length - 1] ?? targetPath;
+};
+
+const shortenPath = (targetPath: string): string => {
+  if (targetPath.length <= 56) {
+    return targetPath;
+  }
+
+  const normalized = targetPath.replace(/\//g, '\\');
+  const segments = normalized.split('\\').filter(Boolean);
+
+  if (segments.length < 3) {
+    return normalized;
+  }
+
+  return `...\\${segments.slice(-2).join('\\')}`;
+};
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Something went wrong while processing the request.';
+  return 'Request failed.';
 };
