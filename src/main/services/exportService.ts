@@ -66,9 +66,10 @@ type Worksheet = XLSX.WorkSheet & {
   "!rows"?: Array<{ hpx?: number }>;
 };
 
-const headerFill = "B8CCE4";
-const totalFill = "B8CCE4";
-const groupFill = "DCE6F1";
+const headerFill = "DCE6F0";
+const totalFill = "DCE6F0";
+const groupFill = "E8FAFA";
+const normalFill = "FCFCE8";
 const whiteFill = "FFFFFF";
 const borderColor = "9AB6CE";
 const normalRowHeightPx = 20;
@@ -139,7 +140,7 @@ const projectRowStyle = {
 
 const descriptionLabelStyle = {
   font: baseFont,
-  fill: { patternType: "solid", fgColor: { rgb: whiteFill } },
+  fill: { patternType: "solid", fgColor: { rgb: normalFill } },
   border: verticalBorder,
   alignment: { ...baseAlignment, horizontal: "left", indent: 1 },
 };
@@ -160,7 +161,7 @@ const detailNumberCellStyle = {
 
 const summaryValueCellStyle = {
   font: baseFont,
-  fill: { patternType: "solid", fgColor: { rgb: whiteFill } },
+  fill: { patternType: "solid", fgColor: { rgb: normalFill } },
   border: verticalBorder,
   alignment: { ...baseAlignment, horizontal: "right" },
 };
