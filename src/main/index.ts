@@ -56,12 +56,8 @@ const fitWindowToContent = async (mainWindow: BrowserWindow): Promise<void> => {
   mainWindow.setMinimumSize(nextWidth, nextHeight);
 };
 
-const createMainWindow = async (): Promise<BrowserWindow> => {
-  const rendererName =
-    typeof MAIN_WINDOW_VITE_NAME === 'undefined' || !MAIN_WINDOW_VITE_NAME
-      ? 'main_window'
-      : MAIN_WINDOW_VITE_NAME;
-  const mainWindow = new BrowserWindow({
+const createMainWindow = (): BrowserWindow =>
+  new BrowserWindow({
     useContentSize: true,
     width: MIN_CONTENT_WIDTH,
     height: MIN_CONTENT_HEIGHT,
@@ -77,6 +73,12 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
     }
   });
 
+const loadMainWindow = async (mainWindow: BrowserWindow): Promise<void> => {
+  const rendererName =
+    typeof MAIN_WINDOW_VITE_NAME === 'undefined' || !MAIN_WINDOW_VITE_NAME
+      ? 'main_window'
+      : MAIN_WINDOW_VITE_NAME;
+
   if (typeof MAIN_WINDOW_VITE_DEV_SERVER_URL !== 'undefined' && MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
@@ -84,12 +86,10 @@ const createMainWindow = async (): Promise<BrowserWindow> => {
   }
   await fitWindowToContent(mainWindow);
   mainWindow.setTitle('Clockify Reports');
-
-  return mainWindow;
 };
 
 app.whenReady().then(async () => {
-  const mainWindow = await createMainWindow();
+  let mainWindow = createMainWindow();
 
   registerIpcHandlers({
     ipcMain,
@@ -108,9 +108,12 @@ app.whenReady().then(async () => {
     })
   });
 
+  await loadMainWindow(mainWindow);
+
   app.on('activate', async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      await createMainWindow();
+      mainWindow = createMainWindow();
+      await loadMainWindow(mainWindow);
     }
   });
 });
