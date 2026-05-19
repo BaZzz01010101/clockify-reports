@@ -28,15 +28,15 @@ describe('JsonPreferencesStore', () => {
     const store = new JsonPreferencesStore(path.join(directory, 'preferences.json'));
 
     await store.write({
-      lastWorkspaceId: 'ws-1'
+      lastWorkspaceId: 'ws-1',
     });
     await store.write({
-      lastExportFormat: 'xlsx'
+      lastExportFormat: 'xlsx',
     });
 
     await expect(store.read()).resolves.toEqual({
       lastWorkspaceId: 'ws-1',
-      lastExportFormat: 'xlsx'
+      lastExportFormat: 'xlsx',
     });
   });
 });

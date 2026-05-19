@@ -3,15 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const keytarFns = vi.hoisted(() => ({
   getPassword: vi.fn(),
   setPassword: vi.fn(),
-  deletePassword: vi.fn()
+  deletePassword: vi.fn(),
 }));
 
 vi.mock('keytar', () => ({
   default: {
     getPassword: keytarFns.getPassword,
     setPassword: keytarFns.setPassword,
-    deletePassword: keytarFns.deletePassword
-  }
+    deletePassword: keytarFns.deletePassword,
+  },
 }));
 
 import { KeytarCredentialStore } from '@main/services/credentialStore';
@@ -24,9 +24,7 @@ describe('KeytarCredentialStore', () => {
   });
 
   it('falls back to the legacy service name when the renamed service has no stored key', async () => {
-    keytarFns.getPassword
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce('legacy-api-key');
+    keytarFns.getPassword.mockResolvedValueOnce(null).mockResolvedValueOnce('legacy-api-key');
 
     const store = new KeytarCredentialStore();
 

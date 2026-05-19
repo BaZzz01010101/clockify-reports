@@ -8,7 +8,7 @@ export const registerIpcHandlers = ({
   ipcMain,
   service,
   desktop,
-  window
+  window,
 }: {
   ipcMain: Pick<IpcMain, 'handle'>;
   service: Pick<
@@ -27,13 +27,11 @@ export const registerIpcHandlers = ({
 }): void => {
   ipcMain.handle(IPC_CHANNELS.authGetSession, () => service.getSession());
   ipcMain.handle(IPC_CHANNELS.authValidateAndStoreApiKey, (_, apiKey: string) =>
-    service.validateAndStoreApiKey(apiKey)
+    service.validateAndStoreApiKey(apiKey),
   );
   ipcMain.handle(IPC_CHANNELS.authClearApiKey, () => service.clearApiKey());
   ipcMain.handle(IPC_CHANNELS.clockifyGetWorkspaces, () => service.getWorkspaces());
-  ipcMain.handle(IPC_CHANNELS.clockifyExportDetailedReport, (_, request) =>
-    service.exportDetailedReport(request)
-  );
+  ipcMain.handle(IPC_CHANNELS.clockifyExportDetailedReport, (_, request) => service.exportDetailedReport(request));
   ipcMain.handle(IPC_CHANNELS.desktopOpenFile, async (_, targetPath: string) => {
     const error = await desktop.openPath(targetPath);
 
@@ -41,9 +39,7 @@ export const registerIpcHandlers = ({
       throw new Error(error);
     }
   });
-  ipcMain.handle(IPC_CHANNELS.desktopOpenFolder, (_, targetPath: string) =>
-    desktop.showItemInFolder(targetPath)
-  );
+  ipcMain.handle(IPC_CHANNELS.desktopOpenFolder, (_, targetPath: string) => desktop.showItemInFolder(targetPath));
   ipcMain.handle(IPC_CHANNELS.desktopOpenExternalUrl, async (_, url: string) => {
     const externalUrl = url.trim();
     const parsed = new URL(externalUrl);

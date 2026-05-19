@@ -11,8 +11,8 @@ if (typeof window !== 'undefined') {
       removeListener: () => {},
       addEventListener: () => {},
       removeEventListener: () => {},
-      dispatchEvent: () => false
-    })
+      dispatchEvent: () => false,
+    }),
   });
 
   class ResizeObserverMock {
@@ -25,10 +25,10 @@ if (typeof window !== 'undefined') {
 
   Object.defineProperty(window, 'ResizeObserver', {
     writable: true,
-    value: ResizeObserverMock
+    value: ResizeObserverMock,
   });
   Object.defineProperty(globalThis, 'ResizeObserver', {
     writable: true,
-    value: ResizeObserverMock
+    value: ResizeObserverMock,
   });
 }

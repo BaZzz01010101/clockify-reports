@@ -28,7 +28,7 @@ export class JsonPreferencesStore implements PreferencesStore {
     const current = await this.read();
     const merged = {
       ...current,
-      ...next
+      ...next,
     };
 
     await fs.mkdir(path.dirname(this.filePath), { recursive: true });

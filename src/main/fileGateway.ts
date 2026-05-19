@@ -14,7 +14,7 @@ export class ElectronFileGateway implements FileGateway {
   }): Promise<string | null> {
     const result = await this.dialog.showSaveDialog({
       defaultPath: payload.suggestedFileName,
-      filters: [buildFilter(payload.format as ExportFormat)]
+      filters: [buildFilter(payload.format as ExportFormat)],
     });
 
     if (result.canceled || !result.filePath) {

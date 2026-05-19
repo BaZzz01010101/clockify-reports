@@ -8,7 +8,7 @@ describe('registerIpcHandlers', () => {
     const ipcMain = {
       handle: vi.fn((channel: string, handler: (...args: unknown[]) => unknown) => {
         handlers.set(channel, handler);
-      })
+      }),
     };
 
     const service = {
@@ -16,36 +16,38 @@ describe('registerIpcHandlers', () => {
       validateAndStoreApiKey: vi.fn().mockResolvedValue({ apiKeyPresent: true, userEmail: 'user@example.com' }),
       clearApiKey: vi.fn().mockResolvedValue({ apiKeyPresent: false }),
       getWorkspaces: vi.fn().mockResolvedValue({ session: { apiKeyPresent: true }, workspaces: [], preferences: {} }),
-      exportDetailedReport: vi.fn().mockResolvedValue({ kind: 'success', path: 'D:/Exports/report.json', recordCount: 4 })
+      exportDetailedReport: vi
+        .fn()
+        .mockResolvedValue({ kind: 'success', path: 'D:/Exports/report.json', recordCount: 4 }),
     };
     const desktop = {
       openPath: vi.fn().mockResolvedValue(''),
       showItemInFolder: vi.fn(),
       openExternal: vi.fn().mockResolvedValue(undefined),
-      writeText: vi.fn()
+      writeText: vi.fn(),
     };
     const window = {
-      fitContent: vi.fn().mockResolvedValue(undefined)
+      fitContent: vi.fn().mockResolvedValue(undefined),
     };
 
     registerIpcHandlers({
       ipcMain,
       service,
       desktop,
-      window
+      window,
     });
 
     expect(ipcMain.handle).toHaveBeenCalledTimes(10);
     await expect(handlers.get(IPC_CHANNELS.authGetSession)?.()).resolves.toEqual({ apiKeyPresent: false });
     await expect(handlers.get(IPC_CHANNELS.authValidateAndStoreApiKey)?.({}, 'api-key')).resolves.toEqual({
       apiKeyPresent: true,
-      userEmail: 'user@example.com'
+      userEmail: 'user@example.com',
     });
     await expect(handlers.get(IPC_CHANNELS.authClearApiKey)?.()).resolves.toEqual({ apiKeyPresent: false });
     await expect(handlers.get(IPC_CHANNELS.clockifyGetWorkspaces)?.()).resolves.toEqual({
       session: { apiKeyPresent: true },
       workspaces: [],
-      preferences: {}
+      preferences: {},
     });
 
     const exportRequest: ExportRequest = {
@@ -53,17 +55,17 @@ describe('registerIpcHandlers', () => {
       workspaceName: 'Alpha',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      format: 'json'
+      format: 'json',
     };
     await expect(handlers.get(IPC_CHANNELS.clockifyExportDetailedReport)?.({}, exportRequest)).resolves.toEqual({
       kind: 'success',
       path: 'D:/Exports/report.json',
-      recordCount: 4
+      recordCount: 4,
     });
     await expect(handlers.get(IPC_CHANNELS.desktopOpenFile)?.({}, 'D:/Exports/report.json')).resolves.toBeUndefined();
     expect(handlers.get(IPC_CHANNELS.desktopOpenFolder)?.({}, 'D:/Exports/report.json')).toBeUndefined();
     await expect(
-      handlers.get(IPC_CHANNELS.desktopOpenExternalUrl)?.({}, 'https://app.clockify.me/calendar')
+      handlers.get(IPC_CHANNELS.desktopOpenExternalUrl)?.({}, 'https://app.clockify.me/calendar'),
     ).resolves.toBeUndefined();
     expect(handlers.get(IPC_CHANNELS.desktopCopyText)?.({}, 'D:/Exports/report.json')).toBeUndefined();
     await expect(handlers.get(IPC_CHANNELS.windowFitContent)?.()).resolves.toBeUndefined();

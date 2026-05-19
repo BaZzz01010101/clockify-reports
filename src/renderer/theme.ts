@@ -6,14 +6,14 @@ export const appTheme = createTheme({
   fontFamily: 'Segoe UI, Aptos, sans-serif',
   headings: {
     fontFamily: 'Segoe UI, Aptos, sans-serif',
-    fontWeight: '600'
+    fontWeight: '600',
   },
   fontSizes: {
     xs: '12px',
     sm: '13px',
     md: '14px',
     lg: '16px',
-    xl: '20px'
+    xl: '20px',
   },
   colors: {
     blue: [
@@ -26,7 +26,7 @@ export const appTheme = createTheme({
       '#367ff0',
       '#246ccc',
       '#185fa8',
-      '#0d4d85'
-    ]
-  }
+      '#0d4d85',
+    ],
+  },
 });

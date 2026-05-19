@@ -18,7 +18,7 @@ describe('main process startup', () => {
       validateAndStoreApiKey: vi.fn(),
       clearApiKey: vi.fn(),
       getWorkspaces: vi.fn(),
-      exportDetailedReport: vi.fn()
+      exportDetailedReport: vi.fn(),
     };
     const app = {
       getPath: vi.fn(() => 'D:/Clockify/UserData'),
@@ -27,20 +27,20 @@ describe('main process startup', () => {
       whenReady: vi.fn(() => ({
         then: (callback: () => Promise<void>) => {
           readyCallbacks.push(callback);
-        }
-      }))
+        },
+      })),
     };
     const ipcMain = {
       handle: vi.fn((channel: string) => {
         order.push(`handle:${channel}`);
-      })
+      }),
     };
 
     class BrowserWindowMock {
       public static getAllWindows = vi.fn(() => []);
 
       public readonly webContents = {
-        executeJavaScript: vi.fn().mockResolvedValue({ width: 580, height: 320 })
+        executeJavaScript: vi.fn().mockResolvedValue({ width: 580, height: 320 }),
       };
 
       public isDestroyed = vi.fn(() => false);
@@ -64,12 +64,12 @@ describe('main process startup', () => {
       shell: {
         openExternal: vi.fn(),
         openPath: vi.fn(),
-        showItemInFolder: vi.fn()
-      }
+        showItemInFolder: vi.fn(),
+      },
     }));
     vi.doMock('electron-squirrel-startup', () => ({ default: false }));
     vi.doMock('@main/runtime', () => ({
-      createClockifyExporterService: vi.fn(() => service)
+      createClockifyExporterService: vi.fn(() => service),
     }));
 
     await import('../../src/main/index.js');
@@ -77,11 +77,7 @@ describe('main process startup', () => {
 
     await readyCallbacks[0]();
 
-    expect(order.indexOf(`handle:${IPC_CHANNELS.authGetSession}`)).toBeLessThan(
-      order.indexOf('load-renderer')
-    );
-    expect(order.indexOf(`handle:${IPC_CHANNELS.windowFitContent}`)).toBeLessThan(
-      order.indexOf('load-renderer')
-    );
+    expect(order.indexOf(`handle:${IPC_CHANNELS.authGetSession}`)).toBeLessThan(order.indexOf('load-renderer'));
+    expect(order.indexOf(`handle:${IPC_CHANNELS.windowFitContent}`)).toBeLessThan(order.indexOf('load-renderer'));
   });
 });

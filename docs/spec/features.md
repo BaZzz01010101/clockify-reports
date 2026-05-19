@@ -5,6 +5,7 @@ Date: 2026-05-18
 Purpose: capture the publicly visible Clockify feature set as completely as possible for scoping a clone, based on official Clockify materials first, then reviews, community threads, and other secondary sources.
 
 Notes:
+
 - This document inventories product capabilities, not every UI control or pricing rule.
 - When official pages disagreed on exact plan gating for a feature, the capability is still listed, and the plan is treated as approximate.
 - "Core clone scope" means functionality that belongs to Clockify itself. CAKE.com ecosystem products that are merely linked from Clockify are called out separately.
@@ -12,6 +13,7 @@ Notes:
 ## Source base
 
 Primary sources used:
+
 - Official features pages: `clockify.me/features` and feature detail pages for rates, scheduling, expenses, invoicing, and team
 - Official pricing and plan comparison: `clockify.me/pricing`
 - Official Help Center sections: Getting started, Track time & expenses, Projects, Reports, Administration, Integrations & Add-ons
@@ -19,6 +21,7 @@ Primary sources used:
 - Official community forum: `forum.clockify.me`
 
 Secondary sources used:
+
 - G2 review summary
 - Capterra feature catalog
 - TrustRadius reviews
@@ -28,6 +31,7 @@ Secondary sources used:
 ## Product model
 
 Core entities visible across the docs and API:
+
 - Account / identity
 - Workspace
 - User / member / limited member
@@ -400,6 +404,7 @@ Recommendation: do not include these in a first-pass Clockify clone unless the g
 ## 17. User-validated strengths from reviews
 
 Repeatedly praised across G2, Capterra, TrustRadius, Forbes, and Reddit:
+
 - Broad free plan for core time tracking
 - Easy setup and low learning curve
 - Strong reporting relative to price
@@ -413,6 +418,7 @@ Repeatedly praised across G2, Capterra, TrustRadius, Forbes, and Reddit:
 Important because a clone that only copies the feature checklist can still miss why users switch away.
 
 Repeated friction:
+
 - Mobile app quality issues mentioned in review summaries
 - Kiosk usability complaints
 - Invoicing/reporting friction in real workflows
@@ -422,6 +428,7 @@ Repeated friction:
 - Free-plan data/reporting limits
 
 Frequently requested but apparently not native/publicly solved in current Clockify:
+
 - Hard tracking limits or contractual caps that actually stop logging
 - Auto-start on activity and auto-stop on idle with automatic entry creation
 - Negative "adjustment" entries
@@ -437,6 +444,7 @@ These are useful "differentiator candidates" for a clone, but they are not requi
 ### Phase 1: credible core clone
 
 Build first:
+
 - Multi-workspace auth and roles
 - Time tracker, manual entry, timesheet, calendar
 - Projects, tasks, clients, tags
@@ -451,6 +459,7 @@ Reason: this gets most of the value users actually use without taking on the hig
 ### Phase 2: business-grade clone
 
 Add next:
+
 - Expenses
 - Invoicing
 - Time off
@@ -463,6 +472,7 @@ Add next:
 ### Phase 3: enterprise-grade clone
 
 Add last:
+
 - SSO
 - SCIM
 - Audit log
@@ -475,6 +485,7 @@ Add last:
 ## 20. Effort estimate if Codex is used actively
 
 Assumptions:
+
 - One strong full-stack engineer using Codex heavily for scaffolding, CRUD, tests, refactors, migration work, report queries, and documentation
 - Modern web stack, greenfield architecture, no legacy migration burden
 - Reasonable product design decisions made quickly
@@ -483,23 +494,23 @@ Assumptions:
 
 ### Effort by capability area
 
-| Area | Scope | Estimated effort with active Codex |
-| --- | --- | --- |
-| Foundation | auth, tenants/workspaces, roles, billing hooks, settings, base UI, audit-friendly schema | 4-6 engineer-weeks |
-| Core time tracking | timer, manual entry, billable flag, tags, favorites, split, Pomodoro, idle detection, force timer | 5-7 engineer-weeks |
-| Timesheet + calendar | weekly grid, templates, calendar editing, Google/Outlook calendar sync | 4-6 engineer-weeks |
-| Projects + rates | clients, projects, tasks, groups, templates, estimates, rate hierarchy, bulk edit | 5-7 engineer-weeks |
-| Reports | summary/detailed/weekly/activity/dashboard/share/export/filtering | 5-8 engineer-weeks |
-| Team/admin | invites, imports, groups, profile fields, hide pages, edit others' time, exports | 4-6 engineer-weeks |
-| Approval/compliance basics | approvals, lock time, time audit, rounding, reminders, attendance/overtime | 5-7 engineer-weeks |
-| Time off | policies, accruals, requests, approval, balances, holidays | 4-6 engineer-weeks |
-| Expenses + invoicing | expenses, receipts, approvals, invoices, taxes, recurring, payment state | 6-9 engineer-weeks |
-| Scheduling + forecasting | assignments, capacity, milestones, publish, scheduled-vs-tracked, forecasts | 6-9 engineer-weeks |
-| Kiosk + location monitoring | kiosk auth, limited members, GPS, screenshots, privacy controls | 6-9 engineer-weeks |
-| API + webhooks + integrations | public API, webhook system, initial integrations, browser-extension groundwork | 8-12 engineer-weeks |
-| Enterprise controls | SSO, SCIM, audit log, data region abstraction, custom subdomain, control accounts | 8-12 engineer-weeks |
-| Native clients | desktop auto tracker/offline polish, mobile parity, extension polish | 10-16 engineer-weeks |
-| Hardening | QA automation, observability, permissions edge cases, security review, performance | 6-10 engineer-weeks |
+| Area                          | Scope                                                                                             | Estimated effort with active Codex |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Foundation                    | auth, tenants/workspaces, roles, billing hooks, settings, base UI, audit-friendly schema          | 4-6 engineer-weeks                 |
+| Core time tracking            | timer, manual entry, billable flag, tags, favorites, split, Pomodoro, idle detection, force timer | 5-7 engineer-weeks                 |
+| Timesheet + calendar          | weekly grid, templates, calendar editing, Google/Outlook calendar sync                            | 4-6 engineer-weeks                 |
+| Projects + rates              | clients, projects, tasks, groups, templates, estimates, rate hierarchy, bulk edit                 | 5-7 engineer-weeks                 |
+| Reports                       | summary/detailed/weekly/activity/dashboard/share/export/filtering                                 | 5-8 engineer-weeks                 |
+| Team/admin                    | invites, imports, groups, profile fields, hide pages, edit others' time, exports                  | 4-6 engineer-weeks                 |
+| Approval/compliance basics    | approvals, lock time, time audit, rounding, reminders, attendance/overtime                        | 5-7 engineer-weeks                 |
+| Time off                      | policies, accruals, requests, approval, balances, holidays                                        | 4-6 engineer-weeks                 |
+| Expenses + invoicing          | expenses, receipts, approvals, invoices, taxes, recurring, payment state                          | 6-9 engineer-weeks                 |
+| Scheduling + forecasting      | assignments, capacity, milestones, publish, scheduled-vs-tracked, forecasts                       | 6-9 engineer-weeks                 |
+| Kiosk + location monitoring   | kiosk auth, limited members, GPS, screenshots, privacy controls                                   | 6-9 engineer-weeks                 |
+| API + webhooks + integrations | public API, webhook system, initial integrations, browser-extension groundwork                    | 8-12 engineer-weeks                |
+| Enterprise controls           | SSO, SCIM, audit log, data region abstraction, custom subdomain, control accounts                 | 8-12 engineer-weeks                |
+| Native clients                | desktop auto tracker/offline polish, mobile parity, extension polish                              | 10-16 engineer-weeks               |
+| Hardening                     | QA automation, observability, permissions edge cases, security review, performance                | 6-10 engineer-weeks                |
 
 ### Total ranges
 
@@ -511,6 +522,7 @@ Assumptions:
 ### Calendar-time translation
 
 If Codex is used actively and well:
+
 - 1 engineer: 9-18 months for a strong business clone, 18-24+ months for near parity
 - 2 engineers: 5-9 months for a strong business clone, 10-14 months for near parity
 - 3-4 engineers: 4-7 months for a strong business clone, 8-12 months for near parity
@@ -518,6 +530,7 @@ If Codex is used actively and well:
 ### What Codex materially helps with
 
 High leverage:
+
 - CRUD-heavy admin surfaces
 - Table/report/filter/export screens
 - Validation and permission plumbing
@@ -528,6 +541,7 @@ High leverage:
 - Documentation and internal specs
 
 Lower leverage:
+
 - Product decisions and scope discipline
 - Finance/accounting correctness
 - Complex permission edge cases
@@ -541,6 +555,7 @@ Practical expectation: active Codex usage can reduce the build time of a Clockif
 ## 21. Build recommendation
 
 If the goal is to ship a realistic Clockify competitor instead of a research demo:
+
 - Clone the web product first
 - Skip Pumble/Plaky ecosystem scope
 - Defer deep integration count parity
@@ -550,6 +565,7 @@ If the goal is to ship a realistic Clockify competitor instead of a research dem
 ## 22. Public references
 
 Official Clockify:
+
 - https://clockify.me/features
 - https://clockify.me/features/rates
 - https://clockify.me/features/scheduling
@@ -566,6 +582,7 @@ Official Clockify:
 - https://forum.clockify.me/
 
 Reviews and discussions:
+
 - https://www.g2.com/products/clockify/reviews
 - https://www.capterra.com/p/169607/Clockify/
 - https://www.trustradius.com/products/clockify/reviews

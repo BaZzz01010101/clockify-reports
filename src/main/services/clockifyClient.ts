@@ -3,7 +3,7 @@ import type {
   ClockifyDetailedReportResponse,
   ClockifySession,
   DetailedReportQuery,
-  WorkspaceOption
+  WorkspaceOption,
 } from '@shared/types';
 
 const CLOCKIFY_API_BASE_URL = 'https://api.clockify.me/api';
@@ -20,11 +20,7 @@ export interface ClockifyClientOptions {
   fetchFn?: typeof fetch;
 }
 
-export type ClockifyErrorCode =
-  | 'INVALID_API_KEY'
-  | 'RATE_LIMIT'
-  | 'NETWORK_ERROR'
-  | 'API_ERROR';
+export type ClockifyErrorCode = 'INVALID_API_KEY' | 'RATE_LIMIT' | 'NETWORK_ERROR' | 'API_ERROR';
 
 export class ClockifyApiError extends Error {
   public readonly code: ClockifyErrorCode;
@@ -42,14 +38,14 @@ export class ClockifyApiError extends Error {
 export const buildClockifyDateRange = ({
   fromDate,
   toDate,
-  userTimeZone
+  userTimeZone,
 }: ClockifyDateRangeInput): { dateRangeStart: string; dateRangeEnd: string } => {
   const start = DateTime.fromISO(fromDate, { zone: userTimeZone }).startOf('day').toUTC();
   const end = DateTime.fromISO(toDate, { zone: userTimeZone }).endOf('day').toUTC();
 
   return {
     dateRangeStart: start.toISO({ suppressMilliseconds: false }) ?? '',
-    dateRangeEnd: end.toISO({ suppressMilliseconds: false }) ?? ''
+    dateRangeEnd: end.toISO({ suppressMilliseconds: false }) ?? '',
   };
 };
 
@@ -65,14 +61,14 @@ export class ClockifyClient {
       `${CLOCKIFY_API_BASE_URL}/v1/user`,
       {
         method: 'GET',
-        headers: this.buildHeaders(apiKey)
-      }
+        headers: this.buildHeaders(apiKey),
+      },
     );
 
     return {
       apiKeyPresent: true,
       userEmail: user.email,
-      userTimeZone: user.settings?.timeZone ?? 'UTC'
+      userTimeZone: user.settings?.timeZone ?? 'UTC',
     };
   }
 
@@ -81,13 +77,13 @@ export class ClockifyClient {
       `${CLOCKIFY_API_BASE_URL}/v1/workspaces`,
       {
         method: 'GET',
-        headers: this.buildHeaders(apiKey)
-      }
+        headers: this.buildHeaders(apiKey),
+      },
     );
 
     return workspaces.map((workspace) => ({
       id: workspace.id,
-      name: workspace.name
+      name: workspace.name,
     }));
   }
 
@@ -96,7 +92,7 @@ export class ClockifyClient {
     workspaceId,
     fromDate,
     toDate,
-    userTimeZone
+    userTimeZone,
   }: DetailedReportQuery): Promise<ClockifyDetailedReportResponse> {
     const range = buildClockifyDateRange({ fromDate, toDate, userTimeZone });
     const timeentries: ClockifyDetailedReportResponse['timeentries'] = [];
@@ -114,13 +110,13 @@ export class ClockifyClient {
             exportType: 'JSON',
             detailedFilter: {
               page,
-              pageSize: DETAILED_REPORT_PAGE_SIZE
-            }
-          })
-        }
+              pageSize: DETAILED_REPORT_PAGE_SIZE,
+            },
+          }),
+        },
       );
 
-      totals = totals.length > 0 ? totals : pageResponse.totals ?? [];
+      totals = totals.length > 0 ? totals : (pageResponse.totals ?? []);
       timeentries.push(...(pageResponse.timeentries ?? []));
 
       if ((pageResponse.timeentries ?? []).length < DETAILED_REPORT_PAGE_SIZE) {
@@ -132,7 +128,7 @@ export class ClockifyClient {
 
     return {
       totals,
-      timeentries
+      timeentries,
     };
   }
 
@@ -140,7 +136,7 @@ export class ClockifyClient {
     return {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      'X-Api-Key': apiKey
+      'X-Api-Key': apiKey,
     };
   }
 
@@ -153,7 +149,7 @@ export class ClockifyClient {
       throw new ClockifyApiError(
         error instanceof Error ? error.message : 'Network request failed',
         'NETWORK_ERROR',
-        true
+        true,
       );
     }
 
@@ -166,7 +162,12 @@ export class ClockifyClient {
     }
 
     if (!response.ok) {
-      throw new ClockifyApiError(`Clockify API request failed with status ${response.status}`, 'API_ERROR', false, response.status);
+      throw new ClockifyApiError(
+        `Clockify API request failed with status ${response.status}`,
+        'API_ERROR',
+        false,
+        response.status,
+      );
     }
 
     return (await response.json()) as T;

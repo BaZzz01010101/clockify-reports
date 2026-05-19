@@ -15,7 +15,7 @@ import {
   Stack,
   Text,
   Title,
-  Tooltip
+  Tooltip,
 } from '@mantine/core';
 import { DatePickerInput, type DatesRangeValue } from '@mantine/dates';
 import { DateTime } from 'luxon';
@@ -24,14 +24,14 @@ import type {
   ExportResult,
   ExportSuccessResult,
   ExportValidationResult,
-  OverlapRecordSummary
+  OverlapRecordSummary,
 } from '@shared/ipc';
 import type { ClockifySession, ExportFormat, WorkspaceOption } from '@shared/types';
 
 const EXPORT_FORMAT_OPTIONS: Array<{ value: ExportFormat; label: string }> = [
   { value: 'json', label: 'JSON' },
   { value: 'csv', label: 'CSV' },
-  { value: 'xlsx', label: 'Excel (.xlsx)' }
+  { value: 'xlsx', label: 'Excel (.xlsx)' },
 ];
 
 type StatusMessage = { type: 'error'; text: string };
@@ -55,8 +55,8 @@ const buildRangePresets = (): RangePreset[] => {
     {
       key: 'lastMonth',
       label: 'Last month',
-      range: toRange(previousMonth.startOf('month'), previousMonth.endOf('month'))
-    }
+      range: toRange(previousMonth.startOf('month'), previousMonth.endOf('month')),
+    },
   ];
 };
 
@@ -81,7 +81,7 @@ export const App = () => {
   const [fromDate, toDate] = dateRange;
   const selectedWorkspace = useMemo(
     () => workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ?? null,
-    [selectedWorkspaceId, workspaces]
+    [selectedWorkspaceId, workspaces],
   );
   const canExport = Boolean(selectedWorkspace && fromDate && toDate && !exporting);
 
@@ -169,7 +169,7 @@ export const App = () => {
         workspaceName: selectedWorkspace.name,
         fromDate,
         toDate,
-        format
+        format,
       });
 
       if (!result) {
@@ -335,7 +335,7 @@ export const App = () => {
               comboboxProps={{ withinPortal: false }}
               data={workspaces.map((workspace) => ({
                 value: workspace.id,
-                label: workspace.name
+                label: workspace.name,
               }))}
               label="Workspace"
               onChange={(value) => setSelectedWorkspaceId(value ?? '')}
@@ -353,7 +353,7 @@ export const App = () => {
                 aria-label="Range preset"
                 data={[
                   ...presets.map((preset) => ({ label: preset.label, value: preset.key })),
-                  { label: 'Custom', value: 'custom' }
+                  { label: 'Custom', value: 'custom' },
                 ]}
                 fullWidth
                 onChange={onPresetChange}
@@ -442,9 +442,7 @@ export const App = () => {
         size="lg"
       >
         <Stack gap="xs">
-          <Text size="sm">
-            {validationResult?.message} Review the dated rows below to clean them up faster.
-          </Text>
+          <Text size="sm">{validationResult?.message} Review the dated rows below to clean them up faster.</Text>
           <Stack gap={4} className="overlap-list">
             {validationResult?.overlaps.map((overlap, index) => (
               <Box className="overlap-item" key={getOverlapKey(overlap, index)}>
@@ -486,10 +484,7 @@ export const App = () => {
   );
 };
 
-const toRange = (start: DateTime, end: DateTime): AppDateRange => [
-  start.toISODate() ?? '',
-  end.toISODate() ?? ''
-];
+const toRange = (start: DateTime, end: DateTime): AppDateRange => [start.toISODate() ?? '', end.toISODate() ?? ''];
 
 const isWorkday = (date: DateTime): boolean => date.weekday <= 5;
 
@@ -538,8 +533,7 @@ export const getDefaultPresetKey = (today: DateTime): Exclude<PresetKey, 'custom
   return 'thisWeek';
 };
 
-const isSameRange = (left: AppDateRange, right: AppDateRange): boolean =>
-  left[0] === right[0] && left[1] === right[1];
+const isSameRange = (left: AppDateRange, right: AppDateRange): boolean => left[0] === right[0] && left[1] === right[1];
 
 const getActivePreset = (range: AppDateRange, presets: RangePreset[]): PresetKey => {
   const matchedPreset = presets.find((preset) => isSameRange(range, preset.range));
@@ -549,14 +543,14 @@ const getActivePreset = (range: AppDateRange, presets: RangePreset[]): PresetKey
 
 const getDefaultPreset = (
   presets: RangePreset[],
-  today: DateTime
+  today: DateTime,
 ): { key: Exclude<PresetKey, 'custom'>; range: AppDateRange } => {
   const key = getDefaultPresetKey(today);
   const matchedPreset = presets.find((preset) => preset.key === key);
 
   return {
     key,
-    range: matchedPreset?.range ?? toRange(today, today)
+    range: matchedPreset?.range ?? toRange(today, today),
   };
 };
 
@@ -582,7 +576,7 @@ const getOverlapKey = (overlap: ExportOverlap, index: number): string =>
     overlap.first.end,
     overlap.second.start,
     overlap.second.end,
-    index
+    index,
   ].join('|');
 
 const formatRecordTimeRange = (record: Pick<OverlapRecordSummary, 'start' | 'end'>): string =>

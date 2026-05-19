@@ -46,7 +46,7 @@ const fitWindowToContent = async (mainWindow: BrowserWindow): Promise<void> => {
         height: Math.ceil(Math.max(...heightCandidates))
       };
     })`,
-    true
+    true,
   );
 
   const nextWidth = Math.max(Number(contentSize?.width) || MIN_CONTENT_WIDTH, MIN_CONTENT_WIDTH);
@@ -69,15 +69,13 @@ const createMainWindow = (): BrowserWindow =>
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, 'preload.js')
-    }
+      preload: path.join(__dirname, 'preload.js'),
+    },
   });
 
 const loadMainWindow = async (mainWindow: BrowserWindow): Promise<void> => {
   const rendererName =
-    typeof MAIN_WINDOW_VITE_NAME === 'undefined' || !MAIN_WINDOW_VITE_NAME
-      ? 'main_window'
-      : MAIN_WINDOW_VITE_NAME;
+    typeof MAIN_WINDOW_VITE_NAME === 'undefined' || !MAIN_WINDOW_VITE_NAME ? 'main_window' : MAIN_WINDOW_VITE_NAME;
 
   if (typeof MAIN_WINDOW_VITE_DEV_SERVER_URL !== 'undefined' && MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -97,15 +95,15 @@ app.whenReady().then(async () => {
       openPath: (targetPath) => shell.openPath(targetPath),
       showItemInFolder: (targetPath) => shell.showItemInFolder(targetPath),
       openExternal: (url) => shell.openExternal(url),
-      writeText: (text) => clipboard.writeText(text)
+      writeText: (text) => clipboard.writeText(text),
     },
     window: {
-      fitContent: () => fitWindowToContent(mainWindow)
+      fitContent: () => fitWindowToContent(mainWindow),
     },
     service: createClockifyExporterService({
       userDataPath: app.getPath('userData'),
-      dialog
-    })
+      dialog,
+    }),
   });
 
   await loadMainWindow(mainWindow);

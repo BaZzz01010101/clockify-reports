@@ -1,16 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  ClockifyApiError,
-  ClockifyClient,
-  buildClockifyDateRange
-} from '@main/services/clockifyClient';
+import { ClockifyApiError, ClockifyClient, buildClockifyDateRange } from '@main/services/clockifyClient';
 
 const createJsonResponse = (status: number, payload: unknown) =>
   new Response(JSON.stringify(payload), {
     status,
     headers: {
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',
+    },
   });
 
 describe('buildClockifyDateRange', () => {
@@ -18,12 +14,12 @@ describe('buildClockifyDateRange', () => {
     const range = buildClockifyDateRange({
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
 
     expect(range).toEqual({
       dateRangeStart: '2026-05-03T22:00:00.000Z',
-      dateRangeEnd: '2026-05-10T21:59:59.999Z'
+      dateRangeEnd: '2026-05-10T21:59:59.999Z',
     });
   });
 });
@@ -40,9 +36,9 @@ describe('ClockifyClient', () => {
       createJsonResponse(200, {
         email: 'user@example.com',
         settings: {
-          timeZone: 'Europe/Madrid'
-        }
-      })
+          timeZone: 'Europe/Madrid',
+        },
+      }),
     );
 
     const client = new ClockifyClient({ fetchFn: fetchMock });
@@ -50,16 +46,16 @@ describe('ClockifyClient', () => {
     await expect(client.validateApiKey('test-api-key')).resolves.toEqual({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.clockify.me/api/v1/user',
       expect.objectContaining({
         headers: expect.objectContaining({
-          'X-Api-Key': 'test-api-key'
-        })
-      })
+          'X-Api-Key': 'test-api-key',
+        }),
+      }),
     );
   });
 
@@ -67,15 +63,15 @@ describe('ClockifyClient', () => {
     fetchMock.mockResolvedValueOnce(
       createJsonResponse(200, [
         { id: 'ws-1', name: 'Alpha' },
-        { id: 'ws-2', name: 'Beta' }
-      ])
+        { id: 'ws-2', name: 'Beta' },
+      ]),
     );
 
     const client = new ClockifyClient({ fetchFn: fetchMock });
 
     await expect(client.getWorkspaces('test-api-key')).resolves.toEqual([
       { id: 'ws-1', name: 'Alpha' },
-      { id: 'ws-2', name: 'Beta' }
+      { id: 'ws-2', name: 'Beta' },
     ]);
   });
 
@@ -96,10 +92,10 @@ describe('ClockifyClient', () => {
             timeInterval: {
               start: '2026-05-04T08:00:00.000Z',
               end: '2026-05-04T08:30:00.000Z',
-              duration: 'PT30M'
-            }
-          }))
-        })
+              duration: 'PT30M',
+            },
+          })),
+        }),
       )
       .mockResolvedValueOnce(
         createJsonResponse(200, {
@@ -117,11 +113,11 @@ describe('ClockifyClient', () => {
               timeInterval: {
                 start: '2026-05-05T08:00:00.000Z',
                 end: '2026-05-05T08:30:00.000Z',
-                duration: 'PT30M'
-              }
-            }
-          ]
-        })
+                duration: 'PT30M',
+              },
+            },
+          ],
+        }),
       );
 
     const client = new ClockifyClient({ fetchFn: fetchMock });
@@ -131,7 +127,7 @@ describe('ClockifyClient', () => {
       workspaceId: 'ws-1',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
 
     expect(result.timeentries).toHaveLength(501);
@@ -147,10 +143,10 @@ describe('ClockifyClient', () => {
           exportType: 'JSON',
           detailedFilter: {
             page: 1,
-            pageSize: 500
-          }
-        })
-      })
+            pageSize: 500,
+          },
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
@@ -163,10 +159,10 @@ describe('ClockifyClient', () => {
           exportType: 'JSON',
           detailedFilter: {
             page: 2,
-            pageSize: 500
-          }
-        })
-      })
+            pageSize: 500,
+          },
+        }),
+      }),
     );
   });
 
@@ -176,7 +172,7 @@ describe('ClockifyClient', () => {
     const client = new ClockifyClient({ fetchFn: fetchMock });
 
     await expect(client.validateApiKey('bad-key')).rejects.toMatchObject({
-      code: 'INVALID_API_KEY'
+      code: 'INVALID_API_KEY',
     });
   });
 
@@ -191,10 +187,10 @@ describe('ClockifyClient', () => {
         workspaceId: 'ws-1',
         fromDate: '2026-05-04',
         toDate: '2026-05-10',
-        userTimeZone: 'UTC'
-      })
+        userTimeZone: 'UTC',
+      }),
     ).rejects.toMatchObject({
-      code: 'RATE_LIMIT'
+      code: 'RATE_LIMIT',
     });
   });
 
@@ -205,7 +201,7 @@ describe('ClockifyClient', () => {
 
     await expect(client.getWorkspaces('test-api-key')).rejects.toMatchObject({
       code: 'NETWORK_ERROR',
-      retryable: true
+      retryable: true,
     });
   });
 });

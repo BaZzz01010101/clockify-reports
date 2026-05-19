@@ -1,33 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClockifyApiError } from '@main/services/clockifyClient';
 import { ClockifyExporterService } from '@main/services/clockifyExporterService';
-import type {
-  ClockifyDetailedReportResponse,
-  ClockifySession,
-  ExportRequest,
-  WorkspaceOption
-} from '@shared/types';
+import type { ClockifyDetailedReportResponse, ClockifySession, ExportRequest, WorkspaceOption } from '@shared/types';
 
 describe('ClockifyExporterService', () => {
   const validateApiKey = vi.fn<(apiKey: string) => Promise<ClockifySession>>();
   const getWorkspaces = vi.fn<(apiKey: string) => Promise<WorkspaceOption[]>>();
-  const getDetailedReport = vi.fn<
-    (query: {
-      apiKey: string;
-      workspaceId: string;
-      fromDate: string;
-      toDate: string;
-      userTimeZone: string;
-    }) => Promise<ClockifyDetailedReportResponse>
-  >();
+  const getDetailedReport =
+    vi.fn<
+      (query: {
+        apiKey: string;
+        workspaceId: string;
+        fromDate: string;
+        toDate: string;
+        userTimeZone: string;
+      }) => Promise<ClockifyDetailedReportResponse>
+    >();
   const getApiKey = vi.fn<() => Promise<string | null>>();
   const saveApiKey = vi.fn<(apiKey: string) => Promise<void>>();
   const clearApiKey = vi.fn<() => Promise<void>>();
   const readPreferences = vi.fn<() => Promise<Record<string, string>>>();
   const writePreferences = vi.fn<(next: Record<string, string>) => Promise<void>>();
-  const saveExport = vi.fn<
-    (payload: { suggestedFileName: string; format: string; buffer: Buffer }) => Promise<string | null>
-  >();
+  const saveExport =
+    vi.fn<(payload: { suggestedFileName: string; format: string; buffer: Buffer }) => Promise<string | null>>();
 
   const reportPayload: ClockifyDetailedReportResponse = {
     totals: [{ totalTime: 1800 }],
@@ -44,10 +39,10 @@ describe('ClockifyExporterService', () => {
         timeInterval: {
           start: '2026-05-04T08:00:00.000Z',
           end: '2026-05-04T08:30:00.000Z',
-          duration: 'PT30M'
-        }
-      }
-    ]
+          duration: 'PT30M',
+        },
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -68,27 +63,27 @@ describe('ClockifyExporterService', () => {
       client: {
         validateApiKey,
         getWorkspaces,
-        getDetailedReport
+        getDetailedReport,
       },
       credentialStore: {
         getApiKey,
         saveApiKey,
-        clearApiKey
+        clearApiKey,
       },
       preferencesStore: {
         read: readPreferences,
-        write: writePreferences
+        write: writePreferences,
       },
       fileGateway: {
-        saveExport
-      }
+        saveExport,
+      },
     });
 
   it('validates and persists a new API key only after validation succeeds', async () => {
     validateApiKey.mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
 
     const service = createService();
@@ -96,20 +91,18 @@ describe('ClockifyExporterService', () => {
     await expect(service.validateAndStoreApiKey('good-key')).resolves.toEqual({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     expect(saveApiKey).toHaveBeenCalledWith('good-key');
   });
 
   it('does not persist invalid API keys', async () => {
-    validateApiKey.mockRejectedValue(
-      new ClockifyApiError('Invalid Clockify API key', 'INVALID_API_KEY', false, 401)
-    );
+    validateApiKey.mockRejectedValue(new ClockifyApiError('Invalid Clockify API key', 'INVALID_API_KEY', false, 401));
 
     const service = createService();
 
     await expect(service.validateAndStoreApiKey('bad-key')).rejects.toMatchObject({
-      code: 'INVALID_API_KEY'
+      code: 'INVALID_API_KEY',
     });
     expect(saveApiKey).not.toHaveBeenCalled();
   });
@@ -119,12 +112,12 @@ describe('ClockifyExporterService', () => {
     validateApiKey.mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'UTC'
+      userTimeZone: 'UTC',
     });
     getWorkspaces.mockResolvedValue([{ id: 'ws-1', name: 'Alpha' }]);
     readPreferences.mockResolvedValue({
       lastWorkspaceId: 'ws-1',
-      lastExportFormat: 'json'
+      lastExportFormat: 'json',
     });
 
     const service = createService();
@@ -133,13 +126,13 @@ describe('ClockifyExporterService', () => {
       session: {
         apiKeyPresent: true,
         userEmail: 'user@example.com',
-        userTimeZone: 'UTC'
+        userTimeZone: 'UTC',
       },
       workspaces: [{ id: 'ws-1', name: 'Alpha' }],
       preferences: {
         lastWorkspaceId: 'ws-1',
-        lastExportFormat: 'json'
-      }
+        lastExportFormat: 'json',
+      },
     });
   });
 
@@ -148,7 +141,7 @@ describe('ClockifyExporterService', () => {
     validateApiKey.mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     getDetailedReport.mockResolvedValue(reportPayload);
     saveExport.mockResolvedValue('D:/Exports/clockify-detailed-alpha-2026-05-04-2026-05-10.csv');
@@ -158,7 +151,7 @@ describe('ClockifyExporterService', () => {
       workspaceName: 'Alpha',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      format: 'csv'
+      format: 'csv',
     };
 
     const service = createService();
@@ -166,24 +159,24 @@ describe('ClockifyExporterService', () => {
     await expect(service.exportDetailedReport(request)).resolves.toEqual({
       kind: 'success',
       path: 'D:/Exports/clockify-detailed-alpha-2026-05-04-2026-05-10.csv',
-      recordCount: 1
+      recordCount: 1,
     });
     expect(getDetailedReport).toHaveBeenCalledWith({
       apiKey: 'stored-key',
       workspaceId: 'ws-1',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     expect(saveExport).toHaveBeenCalledWith(
       expect.objectContaining({
         suggestedFileName: 'clockify-detailed-alpha-2026-05-04-2026-05-10.csv',
-        format: 'csv'
-      })
+        format: 'csv',
+      }),
     );
     expect(writePreferences).toHaveBeenCalledWith({
       lastWorkspaceId: 'ws-1',
-      lastExportFormat: 'csv'
+      lastExportFormat: 'csv',
     });
   });
 
@@ -192,7 +185,7 @@ describe('ClockifyExporterService', () => {
     validateApiKey.mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     getDetailedReport.mockResolvedValue({
       totals: [{ totalTime: 7200 }],
@@ -209,8 +202,8 @@ describe('ClockifyExporterService', () => {
           timeInterval: {
             start: '2026-05-04T08:00:00.000Z',
             end: '2026-05-04T10:00:00.000Z',
-            duration: 'PT2H'
-          }
+            duration: 'PT2H',
+          },
         },
         {
           id: 'entry-2',
@@ -224,10 +217,10 @@ describe('ClockifyExporterService', () => {
           timeInterval: {
             start: '2026-05-04T09:30:00.000Z',
             end: '2026-05-04T10:30:00.000Z',
-            duration: 'PT1H'
-          }
-        }
-      ]
+            duration: 'PT1H',
+          },
+        },
+      ],
     });
 
     const request: ExportRequest = {
@@ -235,7 +228,7 @@ describe('ClockifyExporterService', () => {
       workspaceName: 'Alpha',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      format: 'csv'
+      format: 'csv',
     };
 
     const service = createService();
@@ -248,13 +241,13 @@ describe('ClockifyExporterService', () => {
           date: '2026-05-04',
           userName: 'Ada Lovelace',
           first: {
-            id: 'entry-1'
+            id: 'entry-1',
           },
           second: {
-            id: 'entry-2'
-          }
-        }
-      ]
+            id: 'entry-2',
+          },
+        },
+      ],
     });
     expect(saveExport).not.toHaveBeenCalled();
     expect(writePreferences).not.toHaveBeenCalled();
@@ -266,7 +259,7 @@ describe('ClockifyExporterService', () => {
     const service = createService();
 
     await expect(service.getSession()).resolves.toEqual({
-      apiKeyPresent: false
+      apiKeyPresent: false,
     });
   });
 });

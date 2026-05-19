@@ -7,10 +7,10 @@ test('connects in smoke mode and exports a CSV report', async () => {
   const outputDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'clockify-reports-smoke-'));
   const env: Record<string, string> = {
     ...Object.fromEntries(
-      Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
+      Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined),
     ),
     CLOCKIFY_EXPORTER_SMOKE_MODE: '1',
-    CLOCKIFY_EXPORTER_SMOKE_OUTPUT_DIR: outputDirectory
+    CLOCKIFY_EXPORTER_SMOKE_OUTPUT_DIR: outputDirectory,
   };
 
   delete env.ELECTRON_RUN_AS_NODE;
@@ -18,7 +18,7 @@ test('connects in smoke mode and exports a CSV report', async () => {
   const app = await electron.launch({
     args: ['.'],
     cwd: path.resolve(__dirname, '../..'),
-    env
+    env,
   });
 
   try {

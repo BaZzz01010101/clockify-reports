@@ -12,22 +12,29 @@ const config = {
     ssr: mainEntry,
     sourcemap: true,
     rollupOptions: {
-      external: ['electron', 'electron/common', 'electron/main', 'electron-squirrel-startup', 'keytar', ...nodeBuiltins],
+      external: [
+        'electron',
+        'electron/common',
+        'electron/main',
+        'electron-squirrel-startup',
+        'keytar',
+        ...nodeBuiltins,
+      ],
       input: mainEntry,
       output: {
         entryFileNames: 'main.js',
-        format: 'cjs'
-      }
-    }
+        format: 'cjs',
+      },
+    },
   },
   resolve: {
     alias: {
       '@main': path.resolve(__dirname, 'src/main'),
-      '@shared': path.resolve(__dirname, 'src/shared')
+      '@shared': path.resolve(__dirname, 'src/shared'),
     },
     conditions: ['node'],
-    mainFields: ['module', 'jsnext:main', 'jsnext']
-  }
+    mainFields: ['module', 'jsnext:main', 'jsnext'],
+  },
 };
 
 export default config;

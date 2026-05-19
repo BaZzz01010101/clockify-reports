@@ -11,7 +11,7 @@ import type {
   ClockifySession,
   DetailedReportQuery,
   UserPreferences,
-  WorkspaceOption
+  WorkspaceOption,
 } from '../shared/types';
 
 export const CLOCKIFY_EXPORTER_SMOKE_MODE_ENV = 'CLOCKIFY_EXPORTER_SMOKE_MODE';
@@ -26,7 +26,7 @@ interface RuntimeOptions {
 export const createClockifyExporterService = ({
   userDataPath,
   dialog,
-  env = process.env
+  env = process.env,
 }: RuntimeOptions): ClockifyExporterService => {
   if (env[CLOCKIFY_EXPORTER_SMOKE_MODE_ENV] === '1') {
     return new ClockifyExporterService({
@@ -34,8 +34,8 @@ export const createClockifyExporterService = ({
       credentialStore: new InMemoryCredentialStore(),
       preferencesStore: new InMemoryPreferencesStore(),
       fileGateway: new AutomaticFileGateway(
-        env[CLOCKIFY_EXPORTER_SMOKE_OUTPUT_DIR_ENV] ?? path.join(userDataPath, 'smoke-exports')
-      )
+        env[CLOCKIFY_EXPORTER_SMOKE_OUTPUT_DIR_ENV] ?? path.join(userDataPath, 'smoke-exports'),
+      ),
     });
   }
 
@@ -43,7 +43,7 @@ export const createClockifyExporterService = ({
     client: new ClockifyClient(),
     credentialStore: new KeytarCredentialStore(),
     preferencesStore: new JsonPreferencesStore(path.join(userDataPath, 'preferences.json')),
-    fileGateway: new ElectronFileGateway(dialog)
+    fileGateway: new ElectronFileGateway(dialog),
   });
 };
 
@@ -73,7 +73,7 @@ class InMemoryPreferencesStore implements PreferencesStore {
   public async write(next: UserPreferences): Promise<void> {
     this.preferences = {
       ...this.preferences,
-      ...next
+      ...next,
     };
   }
 }
@@ -81,11 +81,7 @@ class InMemoryPreferencesStore implements PreferencesStore {
 class AutomaticFileGateway implements FileGateway {
   public constructor(private readonly outputDirectory: string) {}
 
-  public async saveExport(payload: {
-    suggestedFileName: string;
-    format: string;
-    buffer: Buffer;
-  }): Promise<string> {
+  public async saveExport(payload: { suggestedFileName: string; format: string; buffer: Buffer }): Promise<string> {
     const exportPath = path.join(this.outputDirectory, payload.suggestedFileName);
 
     await fs.mkdir(this.outputDirectory, { recursive: true });
@@ -102,7 +98,7 @@ class SmokeClockifyClient {
     return {
       apiKeyPresent: true,
       userEmail: 'smoke.user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     };
   }
 
@@ -130,10 +126,10 @@ class SmokeClockifyClient {
           timeInterval: {
             start: '2026-05-04T08:00:00.000Z',
             end: '2026-05-04T08:30:00.000Z',
-            duration: 'PT30M'
-          }
-        }
-      ]
+            duration: 'PT30M',
+          },
+        },
+      ],
     };
   }
 }

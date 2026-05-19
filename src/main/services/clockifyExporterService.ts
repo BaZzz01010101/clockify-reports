@@ -5,7 +5,7 @@ import {
   buildDefaultExportFileName,
   createCsvBuffer,
   createJsonBuffer,
-  createXlsxBuffer
+  createXlsxBuffer,
 } from '@main/services/exportService';
 import type { PreferencesStore } from '@main/services/preferencesStore';
 import type { ExportOverlap, ExportResult } from '@shared/ipc';
@@ -15,15 +15,11 @@ import type {
   ClockifySession,
   ExportRequest,
   UserPreferences,
-  WorkspaceOption
+  WorkspaceOption,
 } from '@shared/types';
 
 export interface FileGateway {
-  saveExport(payload: {
-    suggestedFileName: string;
-    format: string;
-    buffer: Buffer;
-  }): Promise<string | null>;
+  saveExport(payload: { suggestedFileName: string; format: string; buffer: Buffer }): Promise<string | null>;
 }
 
 interface ClockifyExporterServiceDependencies {
@@ -90,13 +86,13 @@ export class ClockifyExporterService {
     const session = await this.getSession();
     const [workspaces, preferences] = await Promise.all([
       this.dependencies.client.getWorkspaces(apiKey),
-      this.dependencies.preferencesStore.read()
+      this.dependencies.preferencesStore.read(),
     ]);
 
     return {
       session,
       workspaces,
-      preferences
+      preferences,
     };
   }
 
@@ -108,7 +104,7 @@ export class ClockifyExporterService {
       workspaceId: request.workspaceId,
       fromDate: request.fromDate,
       toDate: request.toDate,
-      userTimeZone: session.userTimeZone ?? 'UTC'
+      userTimeZone: session.userTimeZone ?? 'UTC',
     });
     const overlaps = detectEntryOverlaps(report);
 
@@ -117,7 +113,7 @@ export class ClockifyExporterService {
         kind: 'validation-error',
         message: 'Overlapping time entries were found.',
         fixUrl: 'https://app.clockify.me/calendar',
-        overlaps
+        overlaps,
       };
     }
 
@@ -126,10 +122,10 @@ export class ClockifyExporterService {
         request.workspaceName,
         request.fromDate,
         request.toDate,
-        request.format
+        request.format,
       ),
       format: request.format,
-      buffer: this.createBuffer(request.format, report)
+      buffer: this.createBuffer(request.format, report),
     });
 
     if (!exportPath) {
@@ -138,13 +134,13 @@ export class ClockifyExporterService {
 
     await this.dependencies.preferencesStore.write({
       lastWorkspaceId: request.workspaceId,
-      lastExportFormat: request.format
+      lastExportFormat: request.format,
     });
 
     return {
       kind: 'success',
       path: exportPath,
-      recordCount: report.timeentries.length
+      recordCount: report.timeentries.length,
     };
   }
 
@@ -213,15 +209,15 @@ const detectEntryOverlaps = (report: ClockifyDetailedReportResponse): ExportOver
             projectName: current.projectName,
             description: current.description,
             start: current.start.toISO() ?? '',
-            end: current.end.toISO() ?? ''
+            end: current.end.toISO() ?? '',
           },
           second: {
             id: next.id,
             projectName: next.projectName,
             description: next.description,
             start: next.start.toISO() ?? '',
-            end: next.end.toISO() ?? ''
-          }
+            end: next.end.toISO() ?? '',
+          },
         });
       }
     }
@@ -244,7 +240,7 @@ const toComparableEntry = (entry: ClockifyDetailedTimeEntry): ComparableTimeEntr
     projectName: entry.projectName ?? '',
     description: entry.description ?? '',
     start,
-    end
+    end,
   };
 };
 

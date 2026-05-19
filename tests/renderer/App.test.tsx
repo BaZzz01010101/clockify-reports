@@ -26,7 +26,7 @@ describe('App', () => {
     openFolder: vi.fn(),
     openExternalUrl: vi.fn(),
     copyText: vi.fn(),
-    fitWindowToContent: vi.fn()
+    fitWindowToContent: vi.fn(),
   };
 
   beforeEach(() => {
@@ -51,7 +51,7 @@ describe('App', () => {
 
   it('shows the API key form when no credentials are stored', async () => {
     vi.mocked(api.getSession).mockResolvedValue({
-      apiKeyPresent: false
+      apiKeyPresent: false,
     });
 
     renderApp();
@@ -62,7 +62,7 @@ describe('App', () => {
 
   it('renders the app directly in the window client area', async () => {
     vi.mocked(api.getSession).mockResolvedValue({
-      apiKeyPresent: false
+      apiKeyPresent: false,
     });
 
     const { container } = renderApp();
@@ -83,35 +83,35 @@ describe('App', () => {
 
   it('connects, loads workspaces, applies a preset, and exports a report', async () => {
     vi.mocked(api.getSession).mockResolvedValue({
-      apiKeyPresent: false
+      apiKeyPresent: false,
     });
     vi.mocked(api.validateAndStoreApiKey).mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     vi.mocked(api.getWorkspaces).mockResolvedValue({
       session: {
         apiKeyPresent: true,
         userEmail: 'user@example.com',
-        userTimeZone: 'Europe/Madrid'
+        userTimeZone: 'Europe/Madrid',
       },
       workspaces: [{ id: 'ws-1', name: 'Alpha' }],
       preferences: {
         lastWorkspaceId: 'ws-1',
-        lastExportFormat: 'xlsx'
-      }
+        lastExportFormat: 'xlsx',
+      },
     });
     vi.mocked(api.exportDetailedReport).mockResolvedValue({
       kind: 'success',
       path: 'D:/Exports/report.xlsx',
-      recordCount: 1
+      recordCount: 1,
     });
 
     renderApp();
 
     fireEvent.change(await screen.findByLabelText(/api key/i), {
-      target: { value: 'secret-key' }
+      target: { value: 'secret-key' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
 
@@ -133,8 +133,8 @@ describe('App', () => {
         workspaceName: 'Alpha',
         fromDate: '2026-05-11',
         toDate: '2026-05-17',
-        format: 'xlsx'
-      })
+        format: 'xlsx',
+      }),
     );
 
     expect(await screen.findByText(/last export/i)).toBeInTheDocument();
@@ -145,24 +145,24 @@ describe('App', () => {
 
   it('shows a validation dialog when overlapping time entries block export', async () => {
     vi.mocked(api.getSession).mockResolvedValue({
-      apiKeyPresent: false
+      apiKeyPresent: false,
     });
     vi.mocked(api.validateAndStoreApiKey).mockResolvedValue({
       apiKeyPresent: true,
       userEmail: 'user@example.com',
-      userTimeZone: 'Europe/Madrid'
+      userTimeZone: 'Europe/Madrid',
     });
     vi.mocked(api.getWorkspaces).mockResolvedValue({
       session: {
         apiKeyPresent: true,
         userEmail: 'user@example.com',
-        userTimeZone: 'Europe/Madrid'
+        userTimeZone: 'Europe/Madrid',
       },
       workspaces: [{ id: 'ws-1', name: 'Alpha' }],
       preferences: {
         lastWorkspaceId: 'ws-1',
-        lastExportFormat: 'csv'
-      }
+        lastExportFormat: 'csv',
+      },
     });
     vi.mocked(api.exportDetailedReport).mockResolvedValue({
       kind: 'validation-error',
@@ -178,23 +178,23 @@ describe('App', () => {
             projectName: 'Clockify',
             description: 'Morning analysis',
             start: '2026-05-04T08:00:00.000Z',
-            end: '2026-05-04T10:00:00.000Z'
+            end: '2026-05-04T10:00:00.000Z',
           },
           second: {
             id: undefined as unknown as string,
             projectName: 'Clockify',
             description: 'Overlapping review',
             start: '2026-05-04T09:30:00.000Z',
-            end: '2026-05-04T10:30:00.000Z'
-          }
-        }
-      ]
+            end: '2026-05-04T10:30:00.000Z',
+          },
+        },
+      ],
     } as never);
 
     renderApp();
 
     fireEvent.change(await screen.findByLabelText(/api key/i), {
-      target: { value: 'secret-key' }
+      target: { value: 'secret-key' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^connect$/i }));
     expect(await screen.findByText(/user@example.com/i)).toBeInTheDocument();
@@ -207,7 +207,7 @@ describe('App', () => {
     expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /open clockify calendar/i })).toHaveAttribute(
       'href',
-      'https://app.clockify.me/calendar'
+      'https://app.clockify.me/calendar',
     );
     fireEvent.click(screen.getByRole('link', { name: /open clockify calendar/i }));
     await waitFor(() => {
@@ -221,5 +221,5 @@ const renderApp = () =>
   render(
     <MantineProvider theme={appTheme}>
       <App />
-    </MantineProvider>
+    </MantineProvider>,
   );

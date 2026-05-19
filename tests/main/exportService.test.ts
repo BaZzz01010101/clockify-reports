@@ -5,7 +5,7 @@ import {
   createCsvBuffer,
   createJsonBuffer,
   createXlsxBuffer,
-  flattenDetailedEntries
+  flattenDetailedEntries,
 } from '@main/services/exportService';
 import type { ClockifyDetailedReportResponse } from '@shared/types';
 
@@ -26,8 +26,8 @@ const sampleReport: ClockifyDetailedReportResponse = {
         end: '2026-05-11T10:00:00.000Z',
         zonedStart: '2026-05-11T10:00:00+02:00',
         zonedEnd: '2026-05-11T12:00:00+02:00',
-        duration: 7200
-      }
+        duration: 7200,
+      },
     },
     {
       id: 'entry-2',
@@ -43,8 +43,8 @@ const sampleReport: ClockifyDetailedReportResponse = {
         end: '2026-05-12T08:00:00.000Z',
         zonedStart: '2026-05-12T09:15:00+02:00',
         zonedEnd: '2026-05-12T10:00:00+02:00',
-        duration: 2700
-      }
+        duration: 2700,
+      },
     },
     {
       id: 'entry-3',
@@ -60,8 +60,8 @@ const sampleReport: ClockifyDetailedReportResponse = {
         end: '2026-05-12T08:30:00.000Z',
         zonedStart: '2026-05-12T10:00:00+02:00',
         zonedEnd: '2026-05-12T10:30:00+02:00',
-        duration: 1800
-      }
+        duration: 1800,
+      },
     },
     {
       id: 'entry-4',
@@ -77,10 +77,10 @@ const sampleReport: ClockifyDetailedReportResponse = {
         end: '2026-05-13T07:00:00.000Z',
         zonedStart: '2026-05-13T08:00:00+02:00',
         zonedEnd: '2026-05-13T09:00:00+02:00',
-        duration: 3600
-      }
-    }
-  ]
+        duration: 3600,
+      },
+    },
+  ],
 };
 
 describe('flattenDetailedEntries', () => {
@@ -97,7 +97,7 @@ describe('flattenDetailedEntries', () => {
         billable: true,
         start: '2026-05-11T08:00:00.000Z',
         end: '2026-05-11T10:00:00.000Z',
-        durationSeconds: 7200
+        durationSeconds: 7200,
       },
       {
         id: 'entry-2',
@@ -110,7 +110,7 @@ describe('flattenDetailedEntries', () => {
         billable: false,
         start: '2026-05-12T07:15:00.000Z',
         end: '2026-05-12T08:00:00.000Z',
-        durationSeconds: 2700
+        durationSeconds: 2700,
       },
       {
         id: 'entry-3',
@@ -123,7 +123,7 @@ describe('flattenDetailedEntries', () => {
         billable: true,
         start: '2026-05-12T08:00:00.000Z',
         end: '2026-05-12T08:30:00.000Z',
-        durationSeconds: 1800
+        durationSeconds: 1800,
       },
       {
         id: 'entry-4',
@@ -136,8 +136,8 @@ describe('flattenDetailedEntries', () => {
         billable: true,
         start: '2026-05-13T06:00:00.000Z',
         end: '2026-05-13T07:00:00.000Z',
-        durationSeconds: 3600
-      }
+        durationSeconds: 3600,
+      },
     ]);
   });
 
@@ -157,17 +157,17 @@ describe('flattenDetailedEntries', () => {
           timeInterval: {
             start: '2026-05-18T12:40:41+02:00',
             end: '2026-05-18T15:00:36+02:00',
-            duration: 8395 as unknown as string
-          }
-        }
-      ]
+            duration: 8395 as unknown as string,
+          },
+        },
+      ],
     };
 
     expect(flattenDetailedEntries(reportWithNumericDuration)).toEqual([
       expect.objectContaining({
         id: 'entry-numeric-duration',
-        durationSeconds: 8395
-      })
+        durationSeconds: 8395,
+      }),
     ]);
   });
 
@@ -187,10 +187,10 @@ describe('flattenDetailedEntries', () => {
           timeInterval: {
             start: '2026-05-04T10:00:00.000Z',
             end: '2026-05-04T10:15:00.000Z',
-            duration: 'PT15M'
-          }
-        }
-      ]
+            duration: 'PT15M',
+          },
+        },
+      ],
     };
 
     expect(flattenDetailedEntries(reportWithMissingTags)).toEqual([
@@ -205,8 +205,8 @@ describe('flattenDetailedEntries', () => {
         billable: false,
         start: '2026-05-04T10:00:00.000Z',
         end: '2026-05-04T10:15:00.000Z',
-        durationSeconds: 900
-      }
+        durationSeconds: 900,
+      },
     ]);
   });
 
@@ -226,17 +226,17 @@ describe('flattenDetailedEntries', () => {
           timeInterval: {
             start: '2026-05-04T10:00:00.000Z',
             end: '2026-05-04T10:15:00.000Z',
-            duration: '' as unknown as string
-          }
-        }
-      ]
+            duration: '' as unknown as string,
+          },
+        },
+      ],
     };
 
     expect(flattenDetailedEntries(reportWithInvalidDuration)).toEqual([
       expect.objectContaining({
         id: 'entry-invalid-duration',
-        durationSeconds: 0
-      })
+        durationSeconds: 0,
+      }),
     ]);
   });
 });
@@ -253,7 +253,7 @@ describe('export buffers', () => {
     const lines = csvText.trim().split('\n');
 
     expect(lines[0]).toBe(
-      'id,userName,clientName,projectName,taskName,description,tagNames,billable,start,end,durationSeconds'
+      'id,userName,clientName,projectName,taskName,description,tagNames,billable,start,end,durationSeconds',
     );
     expect(lines[1]).toContain('entry-1');
     expect(lines[1]).toContain('"Export, JSON"');
@@ -264,7 +264,7 @@ describe('export buffers', () => {
     const workbook = XLSX.read(createXlsxBuffer(sampleReport), {
       type: 'buffer',
       cellNF: true,
-      cellStyles: true
+      cellStyles: true,
     });
     const summarySheet = workbook.Sheets.Summary;
     const detailsSheet = workbook.Sheets.Details;
@@ -321,19 +321,19 @@ describe('export buffers', () => {
   it('creates header-only CSV and XLSX for empty reports', () => {
     const emptyReport: ClockifyDetailedReportResponse = {
       totals: [],
-      timeentries: []
+      timeentries: [],
     };
 
     const csvText = createCsvBuffer(emptyReport).toString('utf8').trim();
     const workbook = XLSX.read(createXlsxBuffer(emptyReport), {
       type: 'buffer',
-      cellNF: true
+      cellNF: true,
     });
     const summarySheet = workbook.Sheets.Summary;
     const detailsSheet = workbook.Sheets.Details;
 
     expect(csvText).toBe(
-      'id,userName,clientName,projectName,taskName,description,tagNames,billable,start,end,durationSeconds'
+      'id,userName,clientName,projectName,taskName,description,tagNames,billable,start,end,durationSeconds',
     );
     expect(workbook.SheetNames).toEqual(['Summary', 'Details']);
     expect(detailsSheet.A1?.v).toBe('Project');
@@ -348,7 +348,7 @@ describe('export buffers', () => {
 describe('buildDefaultExportFileName', () => {
   it('sanitizes the workspace name for safe filenames', () => {
     expect(buildDefaultExportFileName('Clockify / Research: Team', '2026-05-04', '2026-05-10', 'xlsx')).toBe(
-      'clockify-detailed-clockify-research-team-2026-05-04-2026-05-10.xlsx'
+      'clockify-detailed-clockify-research-team-2026-05-04-2026-05-10.xlsx',
     );
   });
 });

@@ -6,11 +6,11 @@ const invoke = vi.fn();
 
 vi.mock('electron', () => ({
   contextBridge: {
-    exposeInMainWorld
+    exposeInMainWorld,
   },
   ipcRenderer: {
-    invoke
-  }
+    invoke,
+  },
 }));
 
 describe('preload bridge', () => {
@@ -37,7 +37,7 @@ describe('preload bridge', () => {
       workspaceName: 'Alpha',
       fromDate: '2026-05-04',
       toDate: '2026-05-10',
-      format: 'csv'
+      format: 'csv',
     });
     await api.openFile('D:/Exports/report.csv');
     await api.openFolder('D:/Exports/report.csv');
@@ -54,8 +54,8 @@ describe('preload bridge', () => {
       IPC_CHANNELS.clockifyExportDetailedReport,
       expect.objectContaining({
         workspaceId: 'ws-1',
-        format: 'csv'
-      })
+        format: 'csv',
+      }),
     );
     expect(invoke).toHaveBeenNthCalledWith(6, IPC_CHANNELS.desktopOpenFile, 'D:/Exports/report.csv');
     expect(invoke).toHaveBeenNthCalledWith(7, IPC_CHANNELS.desktopOpenFolder, 'D:/Exports/report.csv');

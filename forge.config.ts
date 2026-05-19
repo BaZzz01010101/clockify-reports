@@ -7,34 +7,29 @@ import { VitePlugin } from '@electron-forge/plugin-vite';
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true
+    asar: true,
   },
-  makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin', 'linux']),
-    new MakerRpm({}),
-    new MakerDeb({})
-  ],
+  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin', 'linux']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
     new VitePlugin({
       build: [
         {
           entry: 'src/main/index.ts',
-          config: 'vite.main.config.ts'
+          config: 'vite.main.config.ts',
         },
         {
           entry: 'src/preload/index.ts',
-          config: 'vite.preload.config.ts'
-        }
+          config: 'vite.preload.config.ts',
+        },
       ],
       renderer: [
         {
           name: 'main_window',
-          config: 'vite.renderer.config.ts'
-        }
-      ]
-    })
-  ]
+          config: 'vite.renderer.config.ts',
+        },
+      ],
+    }),
+  ],
 };
 
 export default config;

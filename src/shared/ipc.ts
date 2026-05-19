@@ -1,9 +1,4 @@
-import type {
-  ClockifySession,
-  ExportRequest,
-  UserPreferences,
-  WorkspaceOption
-} from '@shared/types';
+import type { ClockifySession, ExportRequest, UserPreferences, WorkspaceOption } from '@shared/types';
 
 export interface WorkspacePayload {
   session: ClockifySession;
@@ -65,5 +60,5 @@ export const IPC_CHANNELS = {
   desktopOpenFolder: 'desktop:open-folder',
   desktopOpenExternalUrl: 'desktop:open-external-url',
   desktopCopyText: 'desktop:copy-text',
-  windowFitContent: 'window:fit-content'
+  windowFitContent: 'window:fit-content',
 } as const;

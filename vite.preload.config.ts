@@ -19,16 +19,16 @@ const config = {
         inlineDynamicImports: true,
         entryFileNames: 'preload.js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[ext]'
-      }
-    }
+        assetFileNames: '[name].[ext]',
+      },
+    },
   },
   resolve: {
     alias: {
       '@preload': path.resolve(__dirname, 'src/preload'),
-      '@shared': path.resolve(__dirname, 'src/shared')
-    }
-  }
+      '@shared': path.resolve(__dirname, 'src/shared'),
+    },
+  },
 };
 
 export default config;
