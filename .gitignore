@@ -1,4 +1,5 @@
-/node_modules
-/.vite
-/.tmp
-/test-results
+node_modules/
+.vite/
+.tmp/
+test-results/
+out/
