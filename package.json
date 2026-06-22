@@ -2,6 +2,7 @@
   "name": "clockify-reports",
   "version": "0.1.0",
   "private": true,
+  "author": "Andrii Borzylo",
   "description": "Desktop app for Clockify detailed reports",
   "main": ".vite/build/main.js",
   "scripts": {
