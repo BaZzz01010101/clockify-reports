@@ -1,14 +1,45 @@
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
-import started from 'electron-squirrel-startup';
 import { registerIpcHandlers } from '@main/ipc';
 import { createClockifyExporterService } from '@main/runtime';
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string | undefined;
 
-if (started) {
+if (handleSquirrelStartupEvent()) {
   app.quit();
+}
+
+function handleSquirrelStartupEvent(): boolean {
+  if (process.platform !== 'win32') {
+    return false;
+  }
+
+  const command = process.argv[1];
+  const target = path.basename(process.execPath);
+  const updateExe = path.resolve(path.dirname(process.execPath), '..', 'Update.exe');
+  const runUpdate = (args: string[]): void => {
+    spawn(updateExe, args, {
+      detached: true,
+    }).on('close', () => app.quit());
+  };
+
+  if (command === '--squirrel-install' || command === '--squirrel-updated') {
+    runUpdate([`--createShortcut=${target}`]);
+    return true;
+  }
+
+  if (command === '--squirrel-uninstall') {
+    runUpdate([`--removeShortcut=${target}`]);
+    return true;
+  }
+
+  if (command === '--squirrel-obsolete') {
+    return true;
+  }
+
+  return false;
 }
 
 const MIN_CONTENT_WIDTH = 580;

@@ -16,15 +16,12 @@
     "test:smoke": "npm run build && playwright test",
     "verify": "npm run lint && npm run test && npm run test:smoke"
   },
-  "config": {
-    "forge": "./forge.config.ts"
-  },
+  "config": {},
   "dependencies": {
     "@mantine/core": "^9.2.1",
     "@mantine/dates": "^9.2.1",
     "@mantine/hooks": "^9.2.1",
     "dayjs": "^1.11.20",
-    "electron-squirrel-startup": "^1.0.1",
     "keytar": "^7.9.0",
     "luxon": "^3.7.1",
     "react": "^19.1.0",

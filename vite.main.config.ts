@@ -3,6 +3,7 @@ import path from 'node:path';
 
 const nodeBuiltins = builtinModules.flatMap((moduleName) => [moduleName, `node:${moduleName}`]);
 const mainEntry = path.resolve(__dirname, 'src/main/index.ts');
+const bundledDependencies = ['luxon', 'xlsx-js-style'];
 
 const config = {
   build: {
@@ -16,7 +17,6 @@ const config = {
         'electron',
         'electron/common',
         'electron/main',
-        'electron-squirrel-startup',
         'keytar',
         ...nodeBuiltins,
       ],
@@ -26,6 +26,9 @@ const config = {
         format: 'cjs',
       },
     },
+  },
+  ssr: {
+    noExternal: bundledDependencies,
   },
   resolve: {
     alias: {

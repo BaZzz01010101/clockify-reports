@@ -5,9 +5,20 @@ import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 
+const packagedPathPrefixes = ['/.vite', '/node_modules', '/package.json'];
+
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '**/*.node',
+    },
+    ignore: (file) => {
+      if (!file) {
+        return false;
+      }
+
+      return !packagedPathPrefixes.some((prefix) => file.startsWith(prefix));
+    },
   },
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin', 'linux']), new MakerRpm({}), new MakerDeb({})],
   plugins: [
